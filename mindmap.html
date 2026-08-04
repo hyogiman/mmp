@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#15181C">
+<title>마인드맵</title>
+<style>
+/* ============================================================
+   마인드맵 — 생각을 흩뿌리고, 무게중심을 발견하는 도구
+   chrome(작업대)는 조용한 흑연색, 성격은 A4 시트의 테마가 가져간다.
+   UI 강조색(--accent)은 현재 테마의 노드 색을 그대로 물려받는다.
+   ============================================================ */
+:root{
+  --bg:#15181C;        /* 작업대 */
+  --panel:#1E232A;     /* 패널 */
+  --panel2:#252B33;
+  --line:#333B45;      /* 헤어라인 */
+  --txt:#E7EAEE;
+  --dim:#8A94A2;
+  --accent:#4CAF7D;    /* 테마에 따라 동적으로 교체 */
+  --accentTxt:#0F1216;
+  --radius:14px;
+  --sheetShadow:0 24px 60px rgba(0,0,0,.55), 0 2px 0 rgba(255,255,255,.05);
+  --font:"Apple SD Gothic Neo","Pretendard","Malgun Gothic","맑은 고딕","Noto Sans KR",system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{
+  background:var(--bg);color:var(--txt);font-family:var(--font);
+  overflow:hidden;overscroll-behavior:none;
+  letter-spacing:-.01em;
+}
+button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input,textarea{font-family:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.hidden{display:none !important}
+
+/* ---------- 공통 요소 ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  height:46px;padding:0 18px;border-radius:12px;background:var(--panel2);
+  border:1px solid var(--line);font-size:15px;font-weight:600;transition:.15s;
+}
+.btn:hover{background:#2E353E}
+.btn.primary{background:var(--accent);color:var(--accentTxt);border-color:transparent}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent}
+.btn.wide{width:100%}
+.btn.sm{height:38px;padding:0 14px;font-size:13.5px;border-radius:10px}
+.iconbtn{
+  width:40px;height:40px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid transparent;transition:.15s;font-size:17px;color:var(--dim)
+}
+.iconbtn:hover{background:var(--panel2);color:var(--txt)}
+.field{
+  width:100%;height:48px;border-radius:12px;background:#12161A;border:1px solid var(--line);
+  color:var(--txt);padding:0 14px;font-size:15.5px;
+}
+.field:focus{outline:none;border-color:var(--accent)}
+textarea.field{height:auto;min-height:96px;padding:12px 14px;line-height:1.5;resize:none}
+label.lbl{display:block;font-size:12.5px;color:var(--dim);margin:0 0 7px 2px;font-weight:600;letter-spacing:.02em}
+
+/* ---------- 로그인 ---------- */
+#authView{
+  position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:26px;gap:0;
+  background:
+    radial-gradient(1000px 620px at 50% 8%, #1F262E 0%, #15181C 62%, #101317 100%);
+}
+.brandmark{width:86px;height:86px;margin-bottom:22px}
+.brandtitle{font-size:31px;font-weight:800;letter-spacing:.16em;margin:0}
+.brandsub{color:var(--dim);font-size:13.5px;margin:10px 0 30px;letter-spacing:.02em}
+.authbox{width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px}
+.authswitch{margin-top:14px;text-align:center;font-size:13px;color:var(--dim)}
+.authswitch b{color:var(--accent);cursor:pointer}
+.divider{display:flex;align-items:center;gap:12px;color:#59626E;font-size:11.5px;margin:6px 0}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+.msg{font-size:13px;min-height:18px;text-align:center;color:#E2896F}
+
+/* ---------- 시작 화면 ---------- */
+#startView{position:fixed;inset:0;display:flex;flex-direction:column;padding:26px;gap:14px;overflow:auto}
+.startTop{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.startTop h2{font-size:20px;margin:0;letter-spacing:.02em}
+.card{
+  border:1px solid var(--line);background:var(--panel);border-radius:var(--radius);
+  padding:18px;display:flex;align-items:center;gap:14px;transition:.15s;text-align:left;width:100%
+}
+.card:hover{border-color:var(--accent);background:var(--panel2)}
+.card .big{font-size:26px;width:46px;height:46px;border-radius:12px;background:var(--panel2);
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.card h3{margin:0 0 4px;font-size:16px}
+.card p{margin:0;font-size:12.5px;color:var(--dim)}
+.sectionTitle{font-size:12.5px;color:var(--dim);font-weight:700;letter-spacing:.06em;margin:18px 2px 4px}
+
+/* ---------- 에디터 ---------- */
+#appView{position:fixed;inset:0;display:flex;flex-direction:column}
+.topbar{
+  height:56px;flex:0 0 auto;display:flex;align-items:center;gap:4px;padding:0 8px 0 12px;
+  background:rgba(21,24,28,.92);border-bottom:1px solid var(--line);backdrop-filter:blur(8px);z-index:5
+}
+.docTitle{
+  flex:1;min-width:0;font-size:15.5px;font-weight:700;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;padding:6px 8px;border-radius:9px
+}
+.docTitle:hover{background:var(--panel2)}
+.saveDot{font-size:11px;color:var(--dim);flex:0 0 auto;margin-right:2px;white-space:nowrap}
+
+#stage{flex:1;position:relative;overflow:hidden;background:
+  radial-gradient(1200px 800px at 50% 40%, #1A1F25 0%, #131619 70%, #0F1215 100%)}
+#viewport{position:absolute;inset:0;touch-action:none}
+#sheetWrap{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+#sheet{display:block;box-shadow:var(--sheetShadow);border-radius:2px}
+
+/* 무게중심 표시 */
+.hubbar{
+  position:absolute;left:12px;bottom:12px;display:flex;gap:6px;align-items:center;
+  pointer-events:none;flex-wrap:wrap;max-width:60%
+}
+.hubchip{
+  font-size:11px;padding:5px 9px;border-radius:999px;background:rgba(30,35,42,.9);
+  border:1px solid var(--line);color:var(--dim);letter-spacing:.02em
+}
+.hubchip b{color:var(--accent);font-weight:700}
+
+/* 확대/축소 */
+.zoomer{position:absolute;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;align-items:center}
+.zbtn{width:40px;height:40px;border-radius:12px;background:rgba(30,35,42,.92);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:17px;color:var(--dim)}
+.zbtn:hover{color:var(--txt)}
+.fab{
+  width:60px;height:60px;border-radius:20px;background:var(--accent);color:var(--accentTxt);
+  display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:300;
+  box-shadow:0 10px 28px rgba(0,0,0,.45);transition:.15s;margin-top:4px
+}
+.fab:hover{transform:translateY(-2px)}
+.fab:active{transform:scale(.94)}
+
+/* 선택 노드 액션바 */
+.actionbar{
+  position:absolute;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));
+  display:flex;gap:6px;padding:8px;border-radius:16px;background:rgba(30,35,42,.96);
+  border:1px solid var(--line);box-shadow:0 12px 30px rgba(0,0,0,.5);
+  align-items:center;z-index:6;max-width:520px;margin:0 auto
+}
+.actionbar .who{
+  font-size:12.5px;color:var(--dim);padding:0 6px;max-width:96px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto
+}
+.actionbar .who b{color:var(--txt);font-weight:700}
+.abtn{flex:1;height:44px;border-radius:11px;background:var(--panel2);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px;font-size:10.5px;color:var(--dim);border:1px solid transparent}
+.abtn span{font-size:15px;line-height:1}
+.abtn:hover{background:#333B45;color:var(--txt)}
+.abtn.on{background:var(--accent);color:var(--accentTxt)}
+.abtn.danger:hover{background:#4A2A2A;color:#F0A5A5}
+
+/* 안내 배너 */
+.hintbar{
+  position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:6;
+  background:rgba(30,35,42,.96);border:1px solid var(--accent);color:var(--txt);
+  padding:9px 15px;border-radius:999px;font-size:13px;display:flex;align-items:center;gap:10px;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);white-space:nowrap
+}
+.hintbar b{color:var(--accent)}
+
+/* ---------- 서랍 ---------- */
+.scrim{position:fixed;inset:0;background:rgba(8,10,12,.6);backdrop-filter:blur(3px);z-index:20;opacity:0;transition:.2s}
+.scrim.show{opacity:1}
+.drawer{
+  position:fixed;top:0;right:0;bottom:0;width:min(400px,88vw);background:var(--panel);
+  border-left:1px solid var(--line);z-index:21;transform:translateX(102%);transition:transform .26s cubic-bezier(.22,1,.36,1);
+  display:flex;flex-direction:column
+}
+.drawer.open{transform:none}
+.drawerHead{display:flex;align-items:center;justify-content:space-between;padding:16px 14px 12px;border-bottom:1px solid var(--line)}
+.drawerHead h3{margin:0;font-size:16px;letter-spacing:.02em}
+.drawerBody{flex:1;overflow:auto;padding:10px 12px 24px;-webkit-overflow-scrolling:touch}
+.mapItem{
+  display:flex;align-items:center;gap:10px;padding:13px 12px;border-radius:12px;border:1px solid var(--line);
+  background:#1A1F25;margin-bottom:9px;cursor:pointer;transition:.15s
+}
+.mapItem:hover{border-color:var(--accent)}
+.mapItem .swatch{width:30px;height:38px;border-radius:4px;flex:0 0 auto;border:1px solid rgba(255,255,255,.1);position:relative;overflow:hidden}
+.mapItem .swatch i{position:absolute;left:50%;top:50%;width:11px;height:8px;border-radius:99px;transform:translate(-50%,-50%)}
+.mapItem .meta{flex:1;min-width:0}
+.mapItem .meta strong{display:block;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mapItem .meta span{font-size:11.5px;color:var(--dim)}
+.mapItem .del{width:34px;height:34px;border-radius:9px;color:#6C7683;font-size:15px;flex:0 0 auto}
+.mapItem .del:hover{background:#4A2A2A;color:#F0A5A5}
+.empty{text-align:center;color:var(--dim);font-size:13.5px;padding:44px 20px;line-height:1.7}
+
+/* ---------- 모달 ---------- */
+.modal{
+  position:fixed;left:50%;top:50%;transform:translate(-50%,-46%);width:min(430px,92vw);
+  background:var(--panel);border:1px solid var(--line);border-radius:18px;z-index:30;
+  padding:20px;box-shadow:0 30px 70px rgba(0,0,0,.6);max-height:86vh;overflow:auto
+}
+.modal h3{margin:0 0 4px;font-size:17px}
+.modal .sub{margin:0 0 16px;font-size:12.5px;color:var(--dim);line-height:1.55}
+.modalBtns{display:flex;gap:8px;margin-top:16px}
+.modalBtns .btn{flex:1}
+
+/* 테마 선택 */
+.themeGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.themeCard{
+  border:1.5px solid var(--line);border-radius:12px;padding:9px;display:flex;gap:9px;align-items:center;transition:.15s
+}
+.themeCard:hover{border-color:#5B6572}
+.themeCard.on{border-color:var(--accent)}
+.themeCard .prev{width:34px;height:44px;border-radius:5px;position:relative;overflow:hidden;flex:0 0 auto;border:1px solid rgba(255,255,255,.09)}
+.themeCard .prev i{position:absolute;border-radius:99px}
+.themeCard .prev i.c{left:50%;top:50%;width:14px;height:9px;transform:translate(-50%,-50%)}
+.themeCard .prev i.s{width:9px;height:6px}
+.themeCard .nm{font-size:12.5px;font-weight:600;text-align:left;line-height:1.35}
+.themeCard .nm em{display:block;font-style:normal;font-size:10.5px;color:var(--dim);font-weight:500}
+
+.segrow{display:flex;gap:7px}
+.seg{flex:1;height:42px;border-radius:11px;border:1px solid var(--line);background:#12161A;font-size:13.5px;font-weight:600;color:var(--dim)}
+.seg.on{background:var(--accent);color:var(--accentTxt);border-color:transparent}
+.setRow{padding:14px 0;border-bottom:1px solid var(--line)}
+.setRow:last-of-type{border-bottom:0}
+
+/* 토스트 */
+.toast{
+  position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(10px);
+  background:#2B323A;border:1px solid var(--line);padding:11px 18px;border-radius:999px;font-size:13.5px;
+  z-index:60;opacity:0;transition:.22s;pointer-events:none;white-space:nowrap;max-width:90vw
+}
+.toast.show{opacity:1;transform:translateX(-50%)}
+
+/* SVG 노드 */
+#sheet text{user-select:none;-webkit-user-select:none}
+#sheet .node{cursor:grab}
+#sheet .node.dragging{cursor:grabbing}
+.spin{animation:sp 1s linear infinite;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+@media (max-width:420px){
+  .actionbar .who{display:none}
+  .abtn{font-size:10px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 1. 로그인 ============ -->
+<div id="authView">
+  <svg class="brandmark" viewBox="0 0 100 100" fill="none">
+    <line x1="50" y1="50" x2="22" y2="26" stroke="#4CAF7D" stroke-width="2.4"/>
+    <line x1="50" y1="50" x2="80" y2="30" stroke="#4CAF7D" stroke-width="2.4"/>
+    <line x1="50" y1="50" x2="26" y2="74" stroke="#4CAF7D" stroke-width="2.4"/>
+    <line x1="50" y1="50" x2="78" y2="72" stroke="#4CAF7D" stroke-width="2.4"/>
+    <line x1="80" y1="30" x2="92" y2="52" stroke="#4CAF7D" stroke-width="1.6" opacity=".6"/>
+    <ellipse cx="50" cy="50" rx="19" ry="13" fill="#4CAF7D"/>
+    <ellipse cx="22" cy="26" rx="11" ry="7.5" fill="#1E232A" stroke="#4CAF7D" stroke-width="2"/>
+    <ellipse cx="80" cy="30" rx="12" ry="8.5" fill="#1E232A" stroke="#4CAF7D" stroke-width="2.6"/>
+    <ellipse cx="26" cy="74" rx="10" ry="7" fill="#1E232A" stroke="#4CAF7D" stroke-width="2"/>
+    <ellipse cx="78" cy="72" rx="10" ry="7" fill="#1E232A" stroke="#4CAF7D" stroke-width="2"/>
+    <ellipse cx="92" cy="52" rx="6" ry="4.5" fill="#1E232A" stroke="#4CAF7D" stroke-width="1.6"/>
+  </svg>
+  <h1 class="brandtitle">마인드맵</h1>
+  <p class="brandsub">흩어놓은 생각에서 중심축을 찾는다</p>
+
+  <div class="authbox">
+    <div>
+      <label class="lbl" for="email">이메일</label>
+      <input id="email" class="field" type="email" autocomplete="username" placeholder="name@example.com">
+    </div>
+    <div>
+      <label class="lbl" for="pw">비밀번호</label>
+      <input id="pw" class="field" type="password" autocomplete="current-password" placeholder="••••••••">
+    </div>
+    <button id="btnLogin" class="btn primary wide">로그인</button>
+    <button id="btnSignup" class="btn wide hidden">계정 만들기</button>
+    <p id="authMsg" class="msg"></p>
+    <div class="divider">또는</div>
+    <button id="btnGoogle" class="btn wide">Google 계정으로 계속</button>
+    <button id="btnGuest" class="btn ghost wide">이 기기에만 저장하고 시작</button>
+    <p class="authswitch">계정이 없다면 <b id="toSignup">가입하기</b></p>
+  </div>
+</div>
+
+<!-- ============ 2. 시작 화면 ============ -->
+<div id="startView" class="hidden">
+  <div class="startTop">
+    <h2>마인드맵</h2>
+    <div style="display:flex;gap:2px">
+      <button class="iconbtn" id="btnStartDrawer" title="보관함">☰</button>
+      <button class="iconbtn" id="btnLogout" title="로그아웃">⏻</button>
+    </div>
+  </div>
+  <p style="margin:0 0 6px;font-size:13px;color:var(--dim)" id="whoami"></p>
+
+  <button class="card" id="btnNew">
+    <div class="big">＋</div>
+    <div><h3>새로 만들기</h3><p>A4 한 장 위에 주제 하나를 놓고 시작합니다</p></div>
+  </button>
+  <button class="card" id="btnOpen">
+    <div class="big">🗂</div>
+    <div><h3>불러오기</h3><p>그동안 정리한 마인드맵을 엽니다</p></div>
+  </button>
+
+  <div class="sectionTitle">최근 작업</div>
+  <div id="recentList"></div>
+</div>
+
+<!-- ============ 3. 에디터 ============ -->
+<div id="appView" class="hidden">
+  <div class="topbar">
+    <button class="iconbtn" id="btnBack" title="처음으로">←</button>
+    <div class="docTitle" id="docTitle">제목 없음</div>
+    <span class="saveDot" id="saveDot"></span>
+    <button class="iconbtn" id="btnTidy" title="다시 정렬">✦</button>
+    <button class="iconbtn" id="btnExport" title="내보내기">⤓</button>
+    <button class="iconbtn" id="btnSettings" title="설정">⚙</button>
+    <button class="iconbtn" id="btnDrawer" title="보관함">☰</button>
+  </div>
+
+  <div id="stage">
+    <div id="viewport"><div id="sheetWrap"><svg id="sheet"></svg></div></div>
+
+    <div class="hubbar" id="hubbar"></div>
+
+    <div class="zoomer">
+      <button class="zbtn" id="btnZoomIn" title="확대">＋</button>
+      <button class="zbtn" id="btnZoomOut" title="축소">－</button>
+      <button class="zbtn" id="btnFit" title="화면 맞춤">⤢</button>
+      <button class="fab" id="btnAdd" title="키워드 추가">＋</button>
+    </div>
+
+    <div class="actionbar hidden" id="actionbar">
+      <div class="who" id="selName"></div>
+      <button class="abtn" id="aAdd"><span>＋</span>이어서 추가</button>
+      <button class="abtn" id="aLink"><span>⤳</span>연결</button>
+      <button class="abtn" id="aEdit"><span>✎</span>수정</button>
+      <button class="abtn" id="aPin"><span>📌</span>고정</button>
+      <button class="abtn danger" id="aDel"><span>🗑</span>삭제</button>
+    </div>
+
+    <div class="hintbar hidden" id="hintbar"><b>연결할 키워드</b>를 누르세요 <button class="btn sm" id="hintCancel">취소</button></div>
+  </div>
+</div>
+
+<!-- ============ 서랍 ============ -->
+<div class="scrim hidden" id="scrim"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawerHead">
+    <h3>보관함</h3>
+    <button class="iconbtn" id="btnDrawerClose">✕</button>
+  </div>
+  <div class="drawerBody" id="drawerBody"></div>
+</aside>
+
+<!-- ============ 모달 ============ -->
+<div class="modal hidden" id="mdKeyword">
+  <h3 id="kwTitle">키워드 추가</h3>
+  <p class="sub" id="kwSub"></p>
+  <textarea id="kwInput" class="field" placeholder="키워드를 입력하세요&#10;줄바꿈이나 쉼표로 여러 개를 한 번에"></textarea>
+  <div class="modalBtns">
+    <button class="btn" id="kwCancel">취소</button>
+    <button class="btn primary" id="kwOk">추가</button>
+  </div>
+</div>
+
+<div class="modal hidden" id="mdTitle">
+  <h3>생각의 주제</h3>
+  <p class="sub">가운데에 놓일 한 문장. 이 주제가 곧 이 마인드맵의 제목이 됩니다.</p>
+  <input id="titleInput" class="field" placeholder="예) 신입사원 온보딩을 다시 짠다면">
+  <div class="modalBtns">
+    <button class="btn" id="titleCancel">취소</button>
+    <button class="btn primary" id="titleOk">시작</button>
+  </div>
+</div>
+
+<div class="modal hidden" id="mdSettings">
+  <h3>설정</h3>
+  <p class="sub">테마와 용지 방향은 이 마인드맵에만 적용됩니다.</p>
+  <div class="setRow">
+    <label class="lbl">테마 10</label>
+    <div class="themeGrid" id="themeGrid"></div>
+  </div>
+  <div class="setRow">
+    <label class="lbl">용지 방향</label>
+    <div class="segrow">
+      <button class="seg" data-ori="portrait">세로 A4</button>
+      <button class="seg" data-ori="landscape">가로 A4</button>
+    </div>
+  </div>
+  <div class="setRow">
+    <label class="lbl">연결선</label>
+    <div class="segrow">
+      <button class="seg" data-curve="curve">곡선</button>
+      <button class="seg" data-curve="straight">직선</button>
+    </div>
+  </div>
+  <div class="setRow">
+    <label class="lbl">중심축으로 볼 연결 횟수</label>
+    <div class="segrow">
+      <button class="seg" data-hub="2">2회 이상</button>
+      <button class="seg" data-hub="3">3회 이상</button>
+      <button class="seg" data-hub="4">4회 이상</button>
+    </div>
+  </div>
+  <div class="modalBtns"><button class="btn primary wide" id="setClose">닫기</button></div>
+</div>
+
+<div class="modal hidden" id="mdExport">
+  <h3>내보내기</h3>
+  <p class="sub">현재 A4 한 장을 그대로 저장합니다. 선택 표시나 도구는 빠집니다.</p>
+  <div style="display:flex;flex-direction:column;gap:9px">
+    <button class="btn wide" id="expPng">PNG 이미지로 저장</button>
+    <button class="btn wide" id="expPdf">PDF로 저장</button>
+    <button class="btn wide ghost" id="expJson">백업 파일(JSON) 저장</button>
+  </div>
+  <div class="modalBtns"><button class="btn" id="expClose" style="flex:1">닫기</button></div>
+</div>
+
+<div class="modal hidden" id="mdConfirm">
+  <h3 id="cfTitle">확인</h3>
+  <p class="sub" id="cfBody"></p>
+  <div class="modalBtns">
+    <button class="btn" id="cfNo">취소</button>
+    <button class="btn primary" id="cfYes">확인</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ==========================================================================
+   0. Firebase 설정 — 콘솔에서 복사한 값을 그대로 붙여넣으세요.
+      비워두면 이 기기(브라우저)에만 저장되는 로컬 모드로 동작합니다.
+   ========================================================================== */
+const firebaseConfig = {
+  apiKey: "여기에-API-KEY",
+  authDomain: "여기에-PROJECT.firebaseapp.com",
+  projectId: "여기에-PROJECT-ID",
+  storageBucket: "여기에-PROJECT.appspot.com",
+  messagingSenderId: "여기에-SENDER-ID",
+  appId: "여기에-APP-ID"
+};
+
+/* ==========================================================================
+   1. 테마 10종
+   bg 종이 / grid 미세격자 / node 기본 노드 / hub 중심축 노드 / root 주제
+   ink 글자 / inkOn 노드 위 글자 / line 연결선
+   ========================================================================== */
+const THEMES = [
+  {id:"sprout", name:"새싹",  desc:"기본 · 흰 종이에 초록",
+   bg:"#FFFFFF", grid:"#EEF2EE", node:"#E4F4EA", nodeS:"#2E9E63", hub:"#2E9E63", hubS:"#1B7346",
+   root:"#155E3F", rootS:"#0D4630", ink:"#12291F", inkOn:"#0F3325", inkHub:"#FFFFFF", line:"#8FC4A8", accent:"#2E9E63"},
+  {id:"hanji", name:"한지와 먹", desc:"미색 종이 · 먹빛 선",
+   bg:"#F6F1E4", grid:"#EDE5D2", node:"#FBF8F0", nodeS:"#4A4238", hub:"#2E2A24", hubS:"#151310",
+   root:"#8C2F2A", rootS:"#5E1D1A", ink:"#2A251E", inkOn:"#2A251E", inkHub:"#F6F1E4", line:"#A79A85", accent:"#8C2F2A"},
+  {id:"midnight", name:"심야",  desc:"짙은 남색 · 청록 빛",
+   bg:"#111A2B", grid:"#182339", node:"#1C2A44", nodeS:"#4FD1C5", hub:"#4FD1C5", hubS:"#25907F",
+   root:"#F2C14E", rootS:"#B98C22", ink:"#DCE6F5", inkOn:"#DCE6F5", inkHub:"#0B1420", line:"#3A5680", accent:"#4FD1C5"},
+  {id:"sunset", name:"노을",  desc:"따뜻한 모래 · 주홍",
+   bg:"#FFF6EC", grid:"#FBE9D6", node:"#FFE6D2", nodeS:"#D9663D", hub:"#D9663D", hubS:"#A2431F",
+   root:"#7A3B2E", rootS:"#54271D", ink:"#40251B", inkOn:"#5A2E1C", inkHub:"#FFF6EC", line:"#E5A882", accent:"#D9663D"},
+  {id:"deepsea", name:"심해",  desc:"차가운 청록 계열",
+   bg:"#062B33", grid:"#0A3944", node:"#0E4653", nodeS:"#63D2C0", hub:"#63D2C0", hubS:"#2E9384",
+   root:"#EAF6F2", rootS:"#9FD8CB", ink:"#D6F0EA", inkOn:"#D6F0EA", inkHub:"#03242B", line:"#2C6E7B", accent:"#63D2C0"},
+  {id:"lavender", name:"라벤더", desc:"연보라 · 자주 강조",
+   bg:"#F7F4FC", grid:"#EDE7F7", node:"#EBE2FA", nodeS:"#7C5CC4", hub:"#7C5CC4", hubS:"#553A94",
+   root:"#3C2A6B", rootS:"#281A4C", ink:"#2E2444", inkOn:"#3A2A63", inkHub:"#FFFFFF", line:"#B6A2E0", accent:"#7C5CC4"},
+  {id:"graphite", name:"흑연",  desc:"무채색 · 선의 굵기로만",
+   bg:"#FAFAFA", grid:"#EFEFEF", node:"#FFFFFF", nodeS:"#6B6B6B", hub:"#2B2B2B", hubS:"#000000",
+   root:"#000000", rootS:"#000000", ink:"#1A1A1A", inkOn:"#2B2B2B", inkHub:"#FFFFFF", line:"#9A9A9A", accent:"#5A5A5A"},
+  {id:"terra", name:"흙과 이끼", desc:"베이지 · 올리브",
+   bg:"#F3EFE3", grid:"#E7E1D0", node:"#E6EBD5", nodeS:"#6B7C3F", hub:"#6B7C3F", hubS:"#47552A",
+   root:"#8A5A2B", rootS:"#5E3C1A", ink:"#33301F", inkOn:"#3B4423", inkHub:"#F3EFE3", line:"#A9AE8A", accent:"#6B7C3F"},
+  {id:"forest", name:"밤의 숲", desc:"어두운 초록 · 연둣빛",
+   bg:"#0F1E16", grid:"#16291E", node:"#17301F", nodeS:"#7FD48A", hub:"#7FD48A", hubS:"#3E9450",
+   root:"#F0E6B8", rootS:"#B9AC74", ink:"#DCEBDD", inkOn:"#DCEBDD", inkHub:"#0B1A11", line:"#2F5B3C", accent:"#7FD48A"},
+  {id:"blueprint", name:"청사진", desc:"설계도 · 흰 선",
+   bg:"#12386B", grid:"#1B4680", node:"#12386B", nodeS:"#DCEAFB", hub:"#DCEAFB", hubS:"#FFFFFF",
+   root:"#FFD166", rootS:"#D6A02F", ink:"#EAF2FD", inkOn:"#EAF2FD", inkHub:"#0E2E5A", line:"#78A6DC", accent:"#9EC5F0"}
+];
+const themeById = id => THEMES.find(t=>t.id===id) || THEMES[0];
+
+/* ==========================================================================
+   2. 저장소 어댑터 (Firebase 또는 로컬)
+   ========================================================================== */
+const A4 = {w:595.28, h:841.89};       // pt 단위 = PDF와 1:1
+const MARGIN = 30;
+let FB = null, MODE = "local", USER = null;
+
+async function initFirebase(){
+  if(!firebaseConfig.apiKey || firebaseConfig.apiKey.indexOf("여기에")===0) return null;
+  const V = "https://www.gstatic.com/firebasejs/10.12.2/";
+  const [app, auth, fs] = await Promise.all([
+    import(V+"firebase-app.js"), import(V+"firebase-auth.js"), import(V+"firebase-firestore.js")
+  ]);
+  const a = app.initializeApp(firebaseConfig);
+  return {app:a, auth:auth.getAuth(a), db:fs.getFirestore(a), A:auth, F:fs};
+}
+
+const LocalStore = {
+  key:"mindmap.maps.v1",
+  all(){ try{ return JSON.parse(localStorage.getItem(this.key)||"[]"); }catch(e){ return []; } },
+  save(list){ localStorage.setItem(this.key, JSON.stringify(list)); },
+  async list(){ return this.all().sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)); },
+  async put(doc){
+    const l=this.all(); const i=l.findIndex(x=>x.id===doc.id);
+    if(i>=0) l[i]=doc; else l.push(doc);
+    this.save(l); return doc.id;
+  },
+  async get(id){ return this.all().find(x=>x.id===id)||null; },
+  async remove(id){ this.save(this.all().filter(x=>x.id!==id)); }
+};
+
+const CloudStore = {
+  col(){ return FB.F.collection(FB.db, "users", USER.uid, "maps"); },
+  async list(){
+    const q = FB.F.query(this.col(), FB.F.orderBy("updatedAt","desc"), FB.F.limit(200));
+    const s = await FB.F.getDocs(q);
+    return s.docs.map(d=>({id:d.id, ...d.data()}));
+  },
+  async put(doc){
+    const {id, ...rest} = doc;
+    await FB.F.setDoc(FB.F.doc(FB.db,"users",USER.uid,"maps",id), rest, {merge:false});
+    return id;
+  },
+  async get(id){
+    const s = await FB.F.getDoc(FB.F.doc(FB.db,"users",USER.uid,"maps",id));
+    return s.exists() ? {id:s.id, ...s.data()} : null;
+  },
+  async remove(id){ await FB.F.deleteDoc(FB.F.doc(FB.db,"users",USER.uid,"maps",id)); }
+};
+const Store = () => (MODE==="cloud" ? CloudStore : LocalStore);
+
+/* ==========================================================================
+   3. 상태
+   ========================================================================== */
+let S = null;          // 현재 문서
+let view = {x:0, y:0, k:1};
+let sel = null;        // 선택된 노드 id
+let linkMode = false;
+let dirty = false, saveTimer = null;
+let anim = {alpha:0, raf:0};
+
+const $ = s=>document.querySelector(s);
+const uid = ()=> Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4);
+const esc = s=>String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function blankDoc(title){
+  const w = A4.w, h = A4.h;
+  return {
+    id: uid(), title: title, theme:"sprout", orientation:"portrait", curve:"curve", hubMin:3,
+    nodes:[{id:"root", text:title, x:w/2, y:h/2, pinned:true}],
+    edges:[], createdAt:Date.now(), updatedAt:Date.now()
+  };
+}
+const sheetSize = ()=> S && S.orientation==="landscape" ? {w:A4.h,h:A4.w} : {w:A4.w,h:A4.h};
+
+/* ==========================================================================
+   4. 측정 · 노드 스타일
+   ========================================================================== */
+const SVGFONT = '"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif';
+const mctx = document.createElement("canvas").getContext("2d");
+function measure(text, size, weight){
+  mctx.font = `${weight} ${size}px ${SVGFONT}`;
+  return mctx.measureText(text).width;
+}
+function wrap(text, maxChars){
+  const t = String(text).trim();
+  if(t.length<=maxChars) return [t];
+  const words = t.split(/\s+/);
+  const lines=[]; let cur="";
+  const push=()=>{ if(cur){lines.push(cur); cur="";} };
+  for(const w of words){
+    if(!cur) cur=w;
+    else if((cur+" "+w).length<=maxChars) cur+=" "+w;
+    else { push(); cur=w; }
+  }
+  push();
+  const out=[];
+  for(let l of lines){
+    while(l.length>maxChars){ out.push(l.slice(0,maxChars)); l=l.slice(maxChars); }
+    out.push(l);
+  }
+  const res = out.filter(Boolean).slice(0,3);
+  if(out.length>3) res[2] = res[2].slice(0,maxChars-1)+"…";
+  return res;
+}
+
+let degCache = new Map();
+function recompute(){
+  degCache = new Map();
+  S.nodes.forEach(n=>degCache.set(n.id,0));
+  S.edges.forEach(e=>{
+    degCache.set(e.a,(degCache.get(e.a)||0)+1);
+    degCache.set(e.b,(degCache.get(e.b)||0)+1);
+  });
+  // 깊이(root 기준 BFS)
+  const adj = new Map(); S.nodes.forEach(n=>adj.set(n.id,[]));
+  S.edges.forEach(e=>{ if(adj.has(e.a)&&adj.has(e.b)){ adj.get(e.a).push(e.b); adj.get(e.b).push(e.a); }});
+  const depth = new Map([["root",0]]);
+  const q=["root"];
+  while(q.length){ const c=q.shift(); for(const nb of (adj.get(c)||[])) if(!depth.has(nb)){ depth.set(nb, depth.get(c)+1); q.push(nb);} }
+  S.nodes.forEach(n=>{ n._deg = degCache.get(n.id)||0; n._depth = depth.has(n.id)?depth.get(n.id):1; });
+}
+
+/** 연결 횟수에 따라 커지고 굵어진다 = 중심축의 시각화 */
+function styleOf(n){
+  const hubMin = S.hubMin||3, superMin = hubMin+2;
+  let level = 0, size = 13.5, weight = 500;
+  if(n.id==="root"){ level=3; size=22; weight=800; }
+  else if(n._deg>=superMin){ level=2; size=19.5; weight=800; }
+  else if(n._deg>=hubMin){ level=1; size=16.5; weight=700; }
+  const lines = wrap(n.text, n.id==="root"?11:9);
+  let wMax=0; lines.forEach(l=> wMax=Math.max(wMax, measure(l,size,weight)));
+  const padX = level>=2?24:18, padY = level>=2?15:11;
+  const lh = size*1.28;
+  const rx = Math.max(wMax/2+padX, 30);
+  const ry = Math.max((lines.length*lh)/2+padY, size*0.95);
+  return {level,size,weight,lines,rx,ry,lh};
+}
+function styles(){ const m=new Map(); S.nodes.forEach(n=>m.set(n.id,styleOf(n))); return m; }
+
+/* ==========================================================================
+   5. 자동 정렬 — 방사형 링 + 반발 + 스프링
+      "중심에서 뻗어나가되 서로 겹치지 않는다"
+   ========================================================================== */
+function layout(ticks){
+  recompute();
+  const st = styles();
+  const sz = sheetSize();
+  const cx = sz.w/2, cy = sz.h/2;
+  const root = S.nodes.find(n=>n.id==="root");
+  if(!root) return;
+  root.x = cx; root.y = cy;
+
+  /* 1) 가지 구조 — 먼저 이어진 선이 부모가 된다. 나중에 더한 연결은 가로지르는 선으로만 그린다. */
+  const adj = new Map(); S.nodes.forEach(n=>adj.set(n.id,[]));
+  S.edges.forEach(e=>{ if(adj.has(e.a)&&adj.has(e.b)){ adj.get(e.a).push(e.b); adj.get(e.b).push(e.a); }});
+  const children = new Map(); S.nodes.forEach(n=>children.set(n.id,[]));
+  const seen = new Set(["root"]), order = [], q = ["root"];
+  while(q.length){
+    const c = q.shift(); order.push(c);
+    for(const nb of adj.get(c)||[]) if(!seen.has(nb)){ seen.add(nb); children.get(c).push(nb); q.push(nb); }
+  }
+  S.nodes.forEach(n=>{ if(!seen.has(n.id)){ seen.add(n.id); children.get("root").push(n.id); order.push(n.id); }});
+
+  /* 2) 가지마다 끝가지 수를 세어 각도를 나눠 갖는다 = 굵은 가지가 넓은 부채꼴을 차지 */
+  const leaves = new Map();
+  for(let i=order.length-1;i>=0;i--){
+    const id = order[i], ch = children.get(id);
+    leaves.set(id, ch.length ? ch.reduce((s,c)=>s+(leaves.get(c)||1),0) : 1);
+  }
+  const angle = new Map(), depth = new Map();
+  (function assign(id, a0, a1, d){
+    depth.set(id, d);
+    angle.set(id, (a0+a1)/2);
+    const ch = children.get(id); if(!ch.length) return;
+    const total = leaves.get(id)||1;
+    let a = a0;
+    ch.forEach(c=>{ const span=(a1-a0)*((leaves.get(c)||1)/total); assign(c, a, a+span, d+1); a+=span; });
+  })("root", -Math.PI/2, Math.PI*1.5, 0);
+
+  /* 3) A4 비율에 맞춘 타원 링 — 세로 종이는 세로로 더 넓게 퍼진다 */
+  const maxDepth = Math.max(1, ...[...depth.values()]);
+  let padX=0, padY=0;
+  st.forEach(s=>{ padX=Math.max(padX,s.rx); padY=Math.max(padY,s.ry); });
+  const RX = Math.max(70, sz.w/2 - MARGIN - padX*0.85);
+  const RY = Math.max(70, sz.h/2 - MARGIN - padY*0.85);
+  const target = new Map();
+  S.nodes.forEach(n=>{
+    const d = depth.get(n.id)||1, a = angle.get(n.id)||0;
+    const t = d/(maxDepth+0.28);
+    target.set(n.id, {x: cx+Math.cos(a)*RX*t, y: cy+Math.sin(a)*RY*t});
+  });
+
+  /* 4) 자리 다듬기 — 목표로 끌어당기고, 겹치면 밀어낸다 */
+  const N = S.nodes;
+  for(let t=0;t<ticks;t++){
+    const ease = 0.10 + 0.12*(1-t/ticks);
+    N.forEach(n=>{
+      if(n.id==="root"||n.pinned) return;
+      const g = target.get(n.id); if(!g) return;
+      n.x += (g.x-n.x)*ease;
+      n.y += (g.y-n.y)*ease;
+    });
+    for(let pass=0;pass<2;pass++)
+    for(let i=0;i<N.length;i++) for(let j=i+1;j<N.length;j++){
+      const a=N[i], b=N[j], sa=st.get(a.id), sb=st.get(b.id);
+      let dx=b.x-a.x, dy=b.y-a.y;
+      let d=Math.hypot(dx,dy)||0.01;
+      const min = Math.max(sa.rx,sa.ry)+Math.max(sb.rx,sb.ry)+9;
+      if(d<min){
+        const push=(min-d)/2, ux=dx/d, uy=dy/d;
+        const aFix = a.id==="root"||a.pinned, bFix = b.id==="root"||b.pinned;
+        if(!aFix){ a.x-=ux*(bFix?push*2:push); a.y-=uy*(bFix?push*2:push); }
+        if(!bFix){ b.x+=ux*(aFix?push*2:push); b.y+=uy*(aFix?push*2:push); }
+      }
+    }
+    N.forEach(n=>{
+      const s=st.get(n.id);
+      n.x = Math.max(MARGIN+s.rx, Math.min(sz.w-MARGIN-s.rx, n.x));
+      n.y = Math.max(MARGIN+s.ry, Math.min(sz.h-MARGIN-s.ry, n.y));
+    });
+  }
+}
+function relayout(ticks=240){ layout(ticks); render(); markDirty(); }
+
+/* ==========================================================================
+   6. 렌더링
+   ========================================================================== */
+function buildSVG({forExport=false}={}){
+  const T = themeById(S.theme), sz = sheetSize();
+  recompute();
+  const st = styles();
+  const P=[];
+  P.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${sz.w} ${sz.h}" width="${sz.w}" height="${sz.h}" font-family='${SVGFONT}'>`);
+  P.push(`<defs>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="${T.grid}" stroke-width="1"/></pattern>
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3.2" flood-color="${T.hubS}" flood-opacity=".28"/></filter>
+  </defs>`);
+  P.push(`<rect width="${sz.w}" height="${sz.h}" fill="${T.bg}"/>`);
+  P.push(`<rect width="${sz.w}" height="${sz.h}" fill="url(#grid)" opacity=".55"/>`);
+
+  // 연결선
+  const maxDeg = Math.max(1, ...S.nodes.filter(n=>n.id!=="root").map(n=>n._deg||0));
+  S.edges.forEach(e=>{
+    const a=S.nodes.find(n=>n.id===e.a), b=S.nodes.find(n=>n.id===e.b);
+    if(!a||!b) return;
+    const w = 1.1 + 2.2*(Math.max(a._deg,b._deg)/Math.max(2,maxDeg));
+    let d;
+    if(S.curve==="straight"){ d=`M${a.x} ${a.y} L${b.x} ${b.y}`; }
+    else{
+      const mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
+      const dx=b.x-a.x, dy=b.y-a.y;
+      d=`M${a.x} ${a.y} Q${mx-dy*0.11} ${my+dx*0.11} ${b.x} ${b.y}`;
+    }
+    P.push(`<path d="${d}" fill="none" stroke="${T.line}" stroke-width="${w.toFixed(2)}" stroke-linecap="round" opacity=".85"/>`);
+  });
+
+  // 노드
+  S.nodes.forEach(n=>{
+    const s = st.get(n.id);
+    const isRoot = n.id==="root";
+    const fill = isRoot?T.root : s.level>=1?T.hub : T.node;
+    const stroke = isRoot?T.rootS : s.level>=1?T.hubS : T.nodeS;
+    const ink = isRoot?T.inkHub : s.level>=1?T.inkHub : T.inkOn;
+    const sw = isRoot?3 : s.level>=2?2.6 : s.level>=1?2.2 : 1.6;
+    const filt = (s.level>=2||isRoot) ? ' filter="url(#soft)"' : "";
+    const cls = forExport?"":` class="node" data-id="${n.id}"`;
+    P.push(`<g${cls}${filt}>`);
+    P.push(`<ellipse cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" rx="${s.rx.toFixed(1)}" ry="${s.ry.toFixed(1)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`);
+    const total=(s.lines.length-1)*s.lh;
+    s.lines.forEach((ln,i)=>{
+      const y = n.y - total/2 + i*s.lh + s.size*0.35;
+      P.push(`<text x="${n.x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="${s.size}" font-weight="${s.weight}" fill="${ink}" letter-spacing="-0.2">${esc(ln)}</text>`);
+    });
+    if(!forExport && sel===n.id){
+      P.push(`<ellipse cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" rx="${(s.rx+9).toFixed(1)}" ry="${(s.ry+9).toFixed(1)}" fill="none" stroke="${T.accent}" stroke-width="2" stroke-dasharray="6 5" opacity=".95"/>`);
+    }
+    if(n.pinned && !isRoot){
+      P.push(`<circle cx="${(n.x+s.rx-3).toFixed(1)}" cy="${(n.y-s.ry+3).toFixed(1)}" r="3.4" fill="${T.rootS}" opacity=".8"/>`);
+    }
+    P.push(`</g>`);
+  });
+
+  // 종이 아래 제목선
+  P.push(`<text x="${MARGIN}" y="${sz.h-16}" font-size="9.5" fill="${T.line}" letter-spacing="1.2">${esc(S.title||"")}</text>`);
+  P.push(`</svg>`);
+  return P.join("");
+}
+
+function render(){
+  if(!S) return;
+  const sz = sheetSize();
+  const svg = $("#sheet");
+  svg.setAttribute("viewBox",`0 0 ${sz.w} ${sz.h}`);
+  svg.setAttribute("width",sz.w); svg.setAttribute("height",sz.h);
+  svg.innerHTML = buildSVG().replace(/^<svg[^>]*>/,"").replace(/<\/svg>$/,"");
+  applyTransform();
+  $("#docTitle").textContent = S.title || "제목 없음";
+  document.documentElement.style.setProperty("--accent", themeById(S.theme).accent);
+  renderHubs();
+  renderActionbar();
+}
+function applyTransform(){
+  $("#sheetWrap").style.transform = `translate(${view.x}px,${view.y}px) scale(${view.k})`;
+}
+function renderHubs(){
+  const arr = S.nodes.filter(n=>n.id!=="root").sort((a,b)=>b._deg-a._deg).slice(0,3).filter(n=>n._deg>=2);
+  $("#hubbar").innerHTML = arr.length
+    ? `<div class="hubchip">중심축</div>` + arr.map(n=>`<div class="hubchip"><b>${esc(n.text)}</b> ${n._deg}</div>`).join("")
+    : "";
+}
+function renderActionbar(){
+  const bar = $("#actionbar");
+  if(!sel){ bar.classList.add("hidden"); return; }
+  const n = S.nodes.find(x=>x.id===sel);
+  if(!n){ sel=null; bar.classList.add("hidden"); return; }
+  bar.classList.remove("hidden");
+  $("#selName").innerHTML = `<b>${esc(n.text)}</b>`;
+  $("#aPin").classList.toggle("on", !!n.pinned);
+  $("#aLink").classList.toggle("on", linkMode);
+  $("#aDel").style.display = n.id==="root" ? "none" : "";
+  $("#aPin").style.display = n.id==="root" ? "none" : "";
+}
+
+/* ==========================================================================
+   7. 뷰포트 (확대·이동)
+   ========================================================================== */
+function fitView(){
+  const st=$("#stage"), sz=sheetSize();
+  const pad = 34;
+  const k = Math.min((st.clientWidth-pad*2)/sz.w, (st.clientHeight-pad*2-40)/sz.h);
+  view.k = Math.max(.2, Math.min(3, k));
+  view.x = (st.clientWidth - sz.w*view.k)/2;
+  view.y = (st.clientHeight - sz.h*view.k)/2 - 8;
+  applyTransform();
+}
+function zoomAt(cx,cy,factor){
+  const k2 = Math.max(.25, Math.min(4, view.k*factor));
+  const r = k2/view.k;
+  view.x = cx - (cx-view.x)*r;
+  view.y = cy - (cy-view.y)*r;
+  view.k = k2; applyTransform();
+}
+function toSheet(clientX, clientY){
+  const r = $("#stage").getBoundingClientRect();
+  return {x:(clientX-r.left-view.x)/view.k, y:(clientY-r.top-view.y)/view.k};
+}
+
+(function bindViewport(){
+  const vp = $("#viewport");
+  let drag=null, pinch=null;
+
+  vp.addEventListener("wheel", e=>{
+    e.preventDefault();
+    const r=$("#stage").getBoundingClientRect();
+    zoomAt(e.clientX-r.left, e.clientY-r.top, e.deltaY<0?1.12:0.89);
+  }, {passive:false});
+
+  vp.addEventListener("pointerdown", e=>{
+    const g = e.target.closest && e.target.closest(".node");
+    if(g){
+      const id = g.dataset.id;
+      if(linkMode && sel && id!==sel){ doLink(sel,id); return; }
+      sel = id; render();
+      const n = S.nodes.find(x=>x.id===id);
+      const p = toSheet(e.clientX,e.clientY);
+      drag = {id, ox:p.x-n.x, oy:p.y-n.y, moved:false};
+      vp.setPointerCapture(e.pointerId);
+    }else{
+      sel = null; linkMode=false; $("#hintbar").classList.add("hidden"); render();
+      drag = {pan:true, sx:e.clientX-view.x, sy:e.clientY-view.y};
+      vp.setPointerCapture(e.pointerId);
+    }
+  });
+  vp.addEventListener("pointermove", e=>{
+    if(!drag) return;
+    if(drag.pan){ view.x=e.clientX-drag.sx; view.y=e.clientY-drag.sy; applyTransform(); return; }
+    const n = S.nodes.find(x=>x.id===drag.id); if(!n) return;
+    const p = toSheet(e.clientX,e.clientY);
+    n.x = p.x-drag.ox; n.y = p.y-drag.oy;
+    drag.moved = true;
+    const sz=sheetSize();
+    n.x=Math.max(MARGIN,Math.min(sz.w-MARGIN,n.x));
+    n.y=Math.max(MARGIN,Math.min(sz.h-MARGIN,n.y));
+    render();
+  });
+  vp.addEventListener("pointerup", e=>{
+    if(drag && !drag.pan && drag.moved){
+      const n=S.nodes.find(x=>x.id===drag.id);
+      if(n && n.id!=="root"){ n.pinned=true; }
+      markDirty(); render();
+    }
+    drag=null;
+  });
+  vp.addEventListener("pointercancel",()=>drag=null);
+  window.addEventListener("resize", ()=>{ if(S) fitView(); });
+})();
+
+/* ==========================================================================
+   8. 편집 동작
+   ========================================================================== */
+function addKeywords(text, parentId){
+  const parts = String(text).split(/[\n,·|]/).map(s=>s.trim()).filter(Boolean);
+  if(!parts.length) return 0;
+  const parent = S.nodes.find(n=>n.id===parentId) || S.nodes[0];
+  const sz = sheetSize();
+  const base = Math.atan2(parent.y-sz.h/2, parent.x-sz.w/2) || (Math.random()*6.28);
+  parts.forEach((txt,i)=>{
+    const ang = base + (i-(parts.length-1)/2)*0.55 + (Math.random()-.5)*0.3;
+    const dist = 110 + Math.random()*30;
+    const id = uid();
+    S.nodes.push({
+      id, text:txt.slice(0,40),
+      x: Math.max(MARGIN+40, Math.min(sz.w-MARGIN-40, parent.x+Math.cos(ang)*dist)),
+      y: Math.max(MARGIN+30, Math.min(sz.h-MARGIN-30, parent.y+Math.sin(ang)*dist)),
+      pinned:false
+    });
+    S.edges.push({id:uid(), a:parent.id, b:id});
+    if(i===parts.length-1) sel = id;
+  });
+  layout(200); render(); markDirty();
+  return parts.length;
+}
+function doLink(a,b){
+  const exists = S.edges.some(e=>(e.a===a&&e.b===b)||(e.a===b&&e.b===a));
+  if(exists){ toast("이미 연결되어 있습니다"); }
+  else { S.edges.push({id:uid(), a, b}); toast("연결했습니다"); }
+  linkMode=false; $("#hintbar").classList.add("hidden");
+  layout(160); render(); markDirty();
+}
+function deleteNode(id){
+  if(id==="root") return;
+  S.nodes = S.nodes.filter(n=>n.id!==id);
+  S.edges = S.edges.filter(e=>e.a!==id && e.b!==id);
+  sel=null; layout(180); render(); markDirty();
+}
+
+/* ==========================================================================
+   9. 저장
+   ========================================================================== */
+function markDirty(){
+  dirty=true; $("#saveDot").textContent="•";
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(saveNow, 1400);
+}
+async function saveNow(){
+  if(!S) return;
+  S.updatedAt = Date.now();
+  S.title = (S.nodes.find(n=>n.id==="root")||{}).text || S.title;
+  const clean = JSON.parse(JSON.stringify(S, (k,v)=> k.startsWith("_")?undefined:v));
+  try{
+    await Store().put(clean);
+    dirty=false; $("#saveDot").textContent="저장됨";
+    setTimeout(()=>{ if(!dirty) $("#saveDot").textContent=""; }, 1600);
+  }catch(e){ console.error(e); $("#saveDot").textContent="저장 실패"; }
+}
+
+/* ==========================================================================
+   10. 내보내기
+   ========================================================================== */
+function svgToDataURL(svg){
+  return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svg)));
+}
+function renderToCanvas(scale=3){
+  return new Promise((res,rej)=>{
+    const sz=sheetSize();
+    const img=new Image();
+    img.onload=()=>{
+      const c=document.createElement("canvas");
+      c.width=Math.round(sz.w*scale); c.height=Math.round(sz.h*scale);
+      const x=c.getContext("2d");
+      x.fillStyle=themeById(S.theme).bg; x.fillRect(0,0,c.width,c.height);
+      x.drawImage(img,0,0,c.width,c.height);
+      res(c);
+    };
+    img.onerror=rej;
+    img.src=svgToDataURL(buildSVG({forExport:true}));
+  });
+}
+function download(url, name){
+  const a=document.createElement("a"); a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+const safeName = ()=> (S.title||"마인드맵").replace(/[\\/:*?"<>|]/g,"_").slice(0,40);
+
+async function exportPNG(){
+  toast("이미지를 만드는 중…");
+  const c = await renderToCanvas(3);
+  c.toBlob(b=>{
+    const u=URL.createObjectURL(b);
+    download(u, safeName()+".png");
+    setTimeout(()=>URL.revokeObjectURL(u),4000);
+    toast("PNG로 저장했습니다");
+  }, "image/png");
+}
+async function exportPDF(){
+  toast("PDF를 만드는 중…");
+  if(!window.jspdf){
+    await new Promise((res,rej)=>{
+      const s=document.createElement("script");
+      s.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+      s.onload=res; s.onerror=rej; document.head.appendChild(s);
+    }).catch(()=>{ toast("PDF 도구를 불러오지 못했습니다"); });
+  }
+  if(!window.jspdf) return;
+  const c = await renderToCanvas(3);
+  const sz = sheetSize();
+  const pdf = new window.jspdf.jsPDF({orientation:S.orientation, unit:"pt", format:"a4"});
+  pdf.addImage(c.toDataURL("image/jpeg",0.96), "JPEG", 0, 0, sz.w, sz.h);
+  pdf.save(safeName()+".pdf");
+  toast("PDF로 저장했습니다");
+}
+function exportJSON(){
+  const clean = JSON.parse(JSON.stringify(S,(k,v)=>k.startsWith("_")?undefined:v));
+  const b = new Blob([JSON.stringify(clean,null,2)],{type:"application/json"});
+  const u = URL.createObjectURL(b);
+  download(u, safeName()+".json");
+  setTimeout(()=>URL.revokeObjectURL(u),4000);
+}
+
+/* ==========================================================================
+   11. UI 유틸
+   ========================================================================== */
+let toastTimer;
+function toast(msg){
+  const t=$("#toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),1900);
+}
+function openModal(id){ $("#scrim").classList.remove("hidden"); requestAnimationFrame(()=>$("#scrim").classList.add("show")); $(id).classList.remove("hidden"); }
+function closeModal(id){ $(id).classList.add("hidden"); if(!document.querySelector(".modal:not(.hidden)") && !$("#drawer").classList.contains("open")) hideScrim(); }
+function hideScrim(){ const s=$("#scrim"); s.classList.remove("show"); setTimeout(()=>s.classList.add("hidden"),200); }
+function confirmBox(title, body, onYes){
+  $("#cfTitle").textContent=title; $("#cfBody").textContent=body;
+  openModal("#mdConfirm");
+  $("#cfYes").onclick=()=>{ closeModal("#mdConfirm"); onYes(); };
+}
+function openDrawer(){ $("#scrim").classList.remove("hidden"); requestAnimationFrame(()=>$("#scrim").classList.add("show")); $("#drawer").classList.add("open"); loadList(); }
+function closeDrawer(){ $("#drawer").classList.remove("open"); if(!document.querySelector(".modal:not(.hidden)")) hideScrim(); }
+$("#scrim").addEventListener("click", ()=>{
+  document.querySelectorAll(".modal").forEach(m=>m.classList.add("hidden"));
+  if(window.resetKwModal) window.resetKwModal();
+  closeDrawer(); hideScrim();
+});
+
+/* ==========================================================================
+   12. 목록
+   ========================================================================== */
+function itemHTML(m){
+  const T=themeById(m.theme);
+  const d=new Date(m.updatedAt||Date.now());
+  const dt=`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")}`;
+  return `<div class="mapItem" data-id="${m.id}">
+    <div class="swatch" style="background:${T.bg}"><i style="background:${T.root}"></i></div>
+    <div class="meta"><strong>${esc(m.title||"제목 없음")}</strong>
+      <span>${dt} · 키워드 ${(m.nodes||[]).length-1}개 · ${esc(T.name)}</span></div>
+    <button class="del" data-del="${m.id}" title="삭제">🗑</button>
+  </div>`;
+}
+async function loadList(){
+  const body=$("#drawerBody");
+  body.innerHTML=`<p class="empty"><span class="spin">◠</span><br>불러오는 중</p>`;
+  let list=[];
+  try{ list=await Store().list(); }catch(e){ console.error(e); }
+  body.innerHTML = list.length
+    ? list.map(itemHTML).join("")
+    : `<p class="empty">아직 저장된 마인드맵이 없습니다.<br>주제 하나를 놓고 시작해 보세요.</p>`;
+  body.querySelectorAll(".mapItem").forEach(el=>{
+    el.addEventListener("click", async e=>{
+      if(e.target.dataset.del) return;
+      const doc = await Store().get(el.dataset.id);
+      if(doc){ closeDrawer(); openDoc(doc); }
+    });
+  });
+  body.querySelectorAll("[data-del]").forEach(b=>{
+    b.addEventListener("click", e=>{
+      e.stopPropagation();
+      const id=b.dataset.del;
+      confirmBox("이 마인드맵을 지울까요?","되돌릴 수 없습니다.", async ()=>{
+        await Store().remove(id); loadList(); refreshRecent(); toast("삭제했습니다");
+      });
+    });
+  });
+}
+async function refreshRecent(){
+  let list=[];
+  try{ list=(await Store().list()).slice(0,4); }catch(e){}
+  const el=$("#recentList");
+  el.innerHTML = list.length ? list.map(itemHTML).join("") : `<p class="empty" style="padding:22px">아직 없습니다.</p>`;
+  el.querySelectorAll(".mapItem").forEach(x=>{
+    x.addEventListener("click", async e=>{
+      if(e.target.dataset.del) return;
+      const doc=await Store().get(x.dataset.id); if(doc) openDoc(doc);
+    });
+  });
+  el.querySelectorAll("[data-del]").forEach(b=>{
+    b.addEventListener("click", e=>{
+      e.stopPropagation();
+      confirmBox("이 마인드맵을 지울까요?","되돌릴 수 없습니다.", async ()=>{
+        await Store().remove(b.dataset.del); refreshRecent(); toast("삭제했습니다");
+      });
+    });
+  });
+}
+
+/* ==========================================================================
+   13. 화면 전환
+   ========================================================================== */
+function show(v){
+  ["#authView","#startView","#appView"].forEach(x=>$(x).classList.add("hidden"));
+  $(v).classList.remove("hidden");
+}
+function openDoc(doc){
+  S = Object.assign({curve:"curve", hubMin:3, orientation:"portrait", theme:"sprout"}, doc);
+  sel=null; linkMode=false; dirty=false;
+  show("#appView");
+  layout(220); render(); fitView();
+  $("#saveDot").textContent="";
+}
+function newDoc(){
+  $("#titleInput").value="";
+  openModal("#mdTitle");
+  setTimeout(()=>$("#titleInput").focus(),120);
+}
+
+/* ==========================================================================
+   14. 이벤트 연결
+   ========================================================================== */
+// 시작 화면
+$("#btnNew").onclick = newDoc;
+$("#btnOpen").onclick = openDrawer;
+$("#btnStartDrawer").onclick = openDrawer;
+$("#btnDrawer").onclick = openDrawer;
+$("#btnDrawerClose").onclick = closeDrawer;
+
+// 주제 모달
+$("#titleCancel").onclick = ()=>closeModal("#mdTitle");
+$("#titleOk").onclick = ()=>{
+  const t=$("#titleInput").value.trim();
+  if(!t){ toast("주제를 적어주세요"); return; }
+  closeModal("#mdTitle");
+  openDoc(blankDoc(t));
+  markDirty();
+};
+$("#titleInput").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#titleOk").click(); });
+
+// 키워드 모달
+let kwParent = null;
+function askKeyword(parentId){
+  kwParent = parentId;
+  const p = S.nodes.find(n=>n.id===parentId);
+  $("#kwSub").textContent = p ? `“${p.text}” 에 이어서 붙습니다.` : "";
+  $("#kwInput").value="";
+  openModal("#mdKeyword");
+  setTimeout(()=>$("#kwInput").focus(),120);
+}
+function resetKwModal(){
+  $("#kwTitle").textContent="키워드 추가";
+  $("#kwOk").onclick = kwAddHandler;
+}
+$("#kwCancel").onclick = ()=>{ closeModal("#mdKeyword"); resetKwModal(); };
+$("#kwInput").addEventListener("keydown", e=>{
+  if(e.key==="Enter" && (e.metaKey||e.ctrlKey)) $("#kwOk").click();
+});
+
+// FAB · 액션바
+$("#btnAdd").onclick = ()=> askKeyword(sel || "root");
+$("#aAdd").onclick = ()=> askKeyword(sel);
+$("#aLink").onclick = ()=>{
+  linkMode=!linkMode;
+  $("#hintbar").classList.toggle("hidden", !linkMode);
+  renderActionbar();
+};
+$("#hintCancel").onclick = ()=>{ linkMode=false; $("#hintbar").classList.add("hidden"); renderActionbar(); };
+$("#aEdit").onclick = ()=>{
+  const n=S.nodes.find(x=>x.id===sel); if(!n) return;
+  kwParent=null;
+  $("#kwTitle").textContent="키워드 수정";
+  $("#kwSub").textContent = n.id==="root" ? "주제를 고치면 제목도 함께 바뀝니다." : "";
+  $("#kwInput").value=n.text;
+  openModal("#mdKeyword");
+  $("#kwOk").onclick = ()=>{
+    const v=$("#kwInput").value.trim().split(/\n/)[0];
+    if(!v){ toast("내용을 적어주세요"); return; }
+    n.text=v.slice(0,40);
+    if(n.id==="root") S.title=n.text;
+    closeModal("#mdKeyword");
+    resetKwModal();
+    layout(120); render(); markDirty();
+  };
+};
+const kwAddHandler = ()=>{
+  const v=$("#kwInput").value.trim();
+  if(!v){ toast("키워드를 적어주세요"); return; }
+  closeModal("#mdKeyword");
+  const n = addKeywords(v, kwParent||"root");
+  toast(n>1?`${n}개를 붙였습니다`:"붙였습니다");
+};
+$("#kwOk").onclick = kwAddHandler;
+window.resetKwModal = resetKwModal;
+
+$("#aPin").onclick = ()=>{
+  const n=S.nodes.find(x=>x.id===sel); if(!n||n.id==="root") return;
+  n.pinned=!n.pinned;
+  if(!n.pinned) layout(180);
+  render(); markDirty();
+  toast(n.pinned?"자리를 고정했습니다":"고정을 풀었습니다");
+};
+$("#aDel").onclick = ()=>{
+  const n=S.nodes.find(x=>x.id===sel); if(!n) return;
+  confirmBox("키워드를 지울까요?", `“${n.text}” 와 연결된 선이 함께 사라집니다.`, ()=>deleteNode(n.id));
+};
+
+// 상단
+$("#btnBack").onclick = async ()=>{ await saveNow(); show("#startView"); refreshRecent(); };
+$("#btnTidy").onclick = ()=>{
+  S.nodes.forEach(n=>{ if(n.id!=="root") n.pinned=false; });
+  relayout(320); toast("다시 정렬했습니다");
+};
+$("#docTitle").onclick = ()=>{ sel="root"; render(); $("#aEdit").click(); };
+$("#btnZoomIn").onclick = ()=>{ const s=$("#stage"); zoomAt(s.clientWidth/2,s.clientHeight/2,1.2); };
+$("#btnZoomOut").onclick = ()=>{ const s=$("#stage"); zoomAt(s.clientWidth/2,s.clientHeight/2,0.83); };
+$("#btnFit").onclick = fitView;
+
+// 내보내기
+$("#btnExport").onclick = ()=>openModal("#mdExport");
+$("#expClose").onclick = ()=>closeModal("#mdExport");
+$("#expPng").onclick = ()=>{ closeModal("#mdExport"); exportPNG(); };
+$("#expPdf").onclick = ()=>{ closeModal("#mdExport"); exportPDF(); };
+$("#expJson").onclick = ()=>{ closeModal("#mdExport"); exportJSON(); };
+
+// 설정
+function paintSettings(){
+  $("#themeGrid").innerHTML = THEMES.map(t=>`
+    <button class="themeCard ${S.theme===t.id?"on":""}" data-theme="${t.id}">
+      <span class="prev" style="background:${t.bg}">
+        <i class="c" style="background:${t.root}"></i>
+        <i class="s" style="background:${t.hub};left:4px;top:7px"></i>
+        <i class="s" style="background:${t.node};border:1px solid ${t.nodeS};right:3px;bottom:8px"></i>
+      </span>
+      <span class="nm">${t.name}<em>${t.desc}</em></span>
+    </button>`).join("");
+  $("#themeGrid").querySelectorAll("[data-theme]").forEach(b=>{
+    b.onclick=()=>{ S.theme=b.dataset.theme; render(); markDirty(); paintSettings(); };
+  });
+  document.querySelectorAll("[data-ori]").forEach(b=>{
+    b.classList.toggle("on", S.orientation===b.dataset.ori);
+    b.onclick=()=>{ S.orientation=b.dataset.ori; layout(280); render(); fitView(); markDirty(); paintSettings(); };
+  });
+  document.querySelectorAll("[data-curve]").forEach(b=>{
+    b.classList.toggle("on", (S.curve||"curve")===b.dataset.curve);
+    b.onclick=()=>{ S.curve=b.dataset.curve; render(); markDirty(); paintSettings(); };
+  });
+  document.querySelectorAll("[data-hub]").forEach(b=>{
+    b.classList.toggle("on", String(S.hubMin||3)===b.dataset.hub);
+    b.onclick=()=>{ S.hubMin=+b.dataset.hub; layout(160); render(); markDirty(); paintSettings(); };
+  });
+}
+$("#btnSettings").onclick = ()=>{ paintSettings(); openModal("#mdSettings"); };
+$("#setClose").onclick = ()=>closeModal("#mdSettings");
+$("#cfNo").onclick = ()=>closeModal("#mdConfirm");
+
+// 키보드
+document.addEventListener("keydown", e=>{
+  if(document.querySelector(".modal:not(.hidden)")) {
+    if(e.key==="Escape") document.querySelectorAll(".modal").forEach(m=>m.classList.add("hidden")), hideScrim();
+    return;
+  }
+  if($("#appView").classList.contains("hidden")) return;
+  if(e.key==="Enter" && !e.isComposing){ e.preventDefault(); askKeyword(sel||"root"); }
+  if(e.key==="Escape"){ sel=null; linkMode=false; $("#hintbar").classList.add("hidden"); render(); }
+  if((e.key==="Delete"||e.key==="Backspace") && sel && sel!=="root") $("#aDel").click();
+});
+window.addEventListener("beforeunload", e=>{ if(dirty){ saveNow(); } });
+document.addEventListener("visibilitychange", ()=>{ if(document.hidden && dirty) saveNow(); });
+
+/* ==========================================================================
+   15. 인증
+   ========================================================================== */
+function authMsg(m){ $("#authMsg").textContent=m||""; }
+let signupMode=false;
+$("#toSignup").onclick = ()=>{
+  signupMode=!signupMode;
+  $("#btnSignup").classList.toggle("hidden", !signupMode);
+  $("#btnLogin").classList.toggle("hidden", signupMode);
+  $("#toSignup").textContent = signupMode ? "로그인으로 돌아가기" : "가입하기";
+  authMsg("");
+};
+$("#btnLogin").onclick = async ()=>{
+  if(!FB){ authMsg("Firebase 설정이 없습니다. 아래 ‘이 기기에만 저장하고 시작’을 눌러주세요."); return; }
+  try{
+    await FB.A.signInWithEmailAndPassword(FB.auth, $("#email").value.trim(), $("#pw").value);
+  }catch(e){ authMsg(authError(e)); }
+};
+$("#btnSignup").onclick = async ()=>{
+  if(!FB){ authMsg("Firebase 설정이 필요합니다."); return; }
+  try{
+    await FB.A.createUserWithEmailAndPassword(FB.auth, $("#email").value.trim(), $("#pw").value);
+  }catch(e){ authMsg(authError(e)); }
+};
+$("#btnGoogle").onclick = async ()=>{
+  if(!FB){ authMsg("Firebase 설정이 필요합니다."); return; }
+  try{
+    await FB.A.signInWithPopup(FB.auth, new FB.A.GoogleAuthProvider());
+  }catch(e){ authMsg(authError(e)); }
+};
+$("#btnGuest").onclick = ()=>{
+  MODE="local"; USER={uid:"local", email:"이 기기"};
+  enterApp();
+};
+$("#btnLogout").onclick = async ()=>{
+  if(MODE==="cloud" && FB){ await FB.A.signOut(FB.auth); }
+  USER=null; show("#authView");
+};
+function authError(e){
+  const c=(e&&e.code)||"";
+  if(c.includes("invalid-credential")||c.includes("wrong-password")) return "이메일 또는 비밀번호가 맞지 않습니다.";
+  if(c.includes("user-not-found")) return "등록되지 않은 이메일입니다.";
+  if(c.includes("email-already-in-use")) return "이미 가입된 이메일입니다.";
+  if(c.includes("weak-password")) return "비밀번호는 6자 이상이어야 합니다.";
+  if(c.includes("invalid-email")) return "이메일 형식을 확인해 주세요.";
+  if(c.includes("popup-closed")) return "로그인 창이 닫혔습니다.";
+  if(c.includes("operation-not-allowed")) return "Firebase 콘솔에서 해당 로그인 방식을 켜주세요.";
+  return "로그인하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+}
+function enterApp(){
+  $("#whoami").textContent = MODE==="cloud"
+    ? `${USER.email||"로그인됨"} · 클라우드 저장`
+    : "이 기기에만 저장됩니다";
+  show("#startView"); refreshRecent();
+}
+
+/* ==========================================================================
+   16. 시작
+   ========================================================================== */
+(async function boot(){
+  try{ FB = await initFirebase(); }catch(e){ console.warn("Firebase 초기화 건너뜀", e); }
+  if(FB){
+    FB.A.onAuthStateChanged(FB.auth, u=>{
+      if(u){ USER=u; MODE="cloud"; enterApp(); }
+      else { USER=null; show("#authView"); }
+    });
+  }else{
+    show("#authView");
+    authMsg("");
+    $("#btnGuest").classList.add("primary");
+  }
+})();
+</script>
+</body>
+</html>
