@@ -433,12 +433,12 @@ label.lbl{display:block;font-size:12.5px;color:var(--dim);margin:0 0 7px 2px;fon
       비워두면 이 기기(브라우저)에만 저장되는 로컬 모드로 동작합니다.
    ========================================================================== */
 const firebaseConfig = {
-  apiKey: "AIzaSyD3OaG0Tl0ZDmVE-hhWJG7SlN1YSsLJE04",
-  authDomain: "mindmap-8d70e.firebaseapp.com",
-  projectId: "mindmap-8d70e",
-  storageBucket: "mindmap-8d70e.firebasestorage.app",
-  messagingSenderId: "268662676375",
-  appId: "1:268662676375:web:690f7ae3741a9c8e12c2d2"
+  apiKey: "여기에-API-KEY",
+  authDomain: "여기에-PROJECT.firebaseapp.com",
+  projectId: "여기에-PROJECT-ID",
+  storageBucket: "여기에-PROJECT.appspot.com",
+  messagingSenderId: "여기에-SENDER-ID",
+  appId: "여기에-APP-ID"
 };
 
 /* ==========================================================================
@@ -936,7 +936,18 @@ async function saveNow(){
     await Store().put(clean);
     dirty=false; $("#saveDot").textContent="저장됨";
     setTimeout(()=>{ if(!dirty) $("#saveDot").textContent=""; }, 1600);
-  }catch(e){ console.error(e); $("#saveDot").textContent="저장 실패"; }
+  }catch(e){
+    console.error("[저장 실패]", e);
+    const code = String((e && e.code) || e || "unknown");
+    $("#saveDot").textContent = "저장 실패";
+    let msg = "저장하지 못했습니다 · " + code;
+    if(code.includes("permission-denied")) msg = "규칙에서 막혔습니다 · Firestore 규칙 확인";
+    else if(code.includes("unauthenticated")) msg = "로그인이 풀렸습니다 · 다시 로그인해 주세요";
+    else if(code.includes("not-found")) msg = "Firestore 데이터베이스가 없습니다 · 콘솔에서 먼저 만들기";
+    else if(code.includes("unavailable")) msg = "네트워크 문제 · 잠시 후 다시 저장됩니다";
+    else if(code.includes("invalid-argument")) msg = "저장할 수 없는 값이 있습니다 · " + code;
+    toast(msg);
+  }
 }
 
 /* ==========================================================================
