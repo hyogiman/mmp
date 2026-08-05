@@ -127,7 +127,7 @@ label.lbl{display:block;font-size:12.5px;color:var(--dim);margin:0 0 7px 2px;fon
 .hubchip b{color:var(--accent);font-weight:700}
 
 /* 확대/축소 */
-.zoomer{position:absolute;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;align-items:center}
+.zoomer{position:absolute;right:16px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:7}
 .zbtn{width:40px;height:40px;border-radius:12px;background:rgba(30,35,42,.92);border:1px solid var(--line);
   display:flex;align-items:center;justify-content:center;font-size:17px;color:var(--dim)}
 .zbtn:hover{color:var(--txt)}
@@ -139,21 +139,49 @@ label.lbl{display:block;font-size:12.5px;color:var(--dim);margin:0 0 7px 2px;fon
 .fab:hover{transform:translateY(-2px)}
 .fab:active{transform:scale(.94)}
 
+/* 라벨 달린 도구 버튼 */
+.toolbtn{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  height:46px;min-width:54px;padding:0 6px;border-radius:11px;color:var(--dim);
+  font-size:10px;font-weight:600;letter-spacing:-.02em;transition:.15s
+}
+.toolbtn:hover{background:var(--panel2);color:var(--txt)}
+.toolbtn i{display:block;width:19px;height:19px}
+.toolbtn svg,.abtn svg,.drawerTab svg{width:100%;height:100%;display:block}
+
+/* 우측면 서랍 손잡이 */
+.drawerTab{
+  position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:15;
+  display:flex;flex-direction:column;align-items:center;gap:9px;padding:17px 8px;
+  background:var(--panel);border:1px solid var(--line);border-right:0;border-radius:13px 0 0 13px;
+  color:var(--dim);box-shadow:-8px 0 20px rgba(0,0,0,.32);transition:.15s
+}
+.drawerTab:hover{color:var(--txt);background:var(--panel2)}
+.drawerTab i{display:block;width:17px;height:17px}
+.drawerTab span{writing-mode:vertical-rl;font-size:11.5px;font-weight:700;letter-spacing:.16em}
+#edgeSwipe{position:absolute;right:0;top:0;bottom:0;width:14px;z-index:14;touch-action:none}
+
+/* 첫 사용 안내 */
+.tapTip{
+  position:absolute;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);
+  z-index:6;font-size:11.5px;padding:7px 14px;border-radius:999px;pointer-events:none;
+  background:rgba(30,35,42,.9);border:1px solid var(--line);color:var(--dim);white-space:nowrap
+}
+
 /* 선택 노드 액션바 */
 .actionbar{
-  position:absolute;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));
-  display:flex;gap:6px;padding:8px;border-radius:16px;background:rgba(30,35,42,.96);
-  border:1px solid var(--line);box-shadow:0 12px 30px rgba(0,0,0,.5);
-  align-items:center;z-index:6;max-width:520px;margin:0 auto
+  position:absolute;left:10px;right:10px;bottom:calc(14px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;padding:9px;border-radius:17px;background:rgba(30,35,42,.97);
+  border:1px solid var(--line);box-shadow:0 14px 34px rgba(0,0,0,.55);
+  z-index:8;max-width:520px;margin:0 auto
 }
-.actionbar .who{
-  font-size:12.5px;color:var(--dim);padding:0 6px;max-width:96px;overflow:hidden;
-  text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto
-}
-.actionbar .who b{color:var(--txt);font-weight:700}
-.abtn{flex:1;height:44px;border-radius:11px;background:var(--panel2);display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:2px;font-size:10.5px;color:var(--dim);border:1px solid transparent}
-.abtn span{font-size:15px;line-height:1}
+.abTitle{font-size:11.5px;color:var(--dim);padding:1px 4px 9px;text-align:center;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.abTitle b{color:var(--txt);font-weight:700;font-size:13px}
+.abRow{display:flex;gap:6px}
+.abtn{flex:1;min-width:0;height:50px;border-radius:11px;background:var(--panel2);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:4px;font-size:10px;font-weight:600;color:var(--dim);border:1px solid transparent}
+.abtn i{display:block;width:17px;height:17px}
 .abtn:hover{background:#333B45;color:var(--txt)}
 .abtn.on{background:var(--accent);color:var(--accentTxt)}
 .abtn.danger:hover{background:#4A2A2A;color:#F0A5A5}
@@ -284,10 +312,7 @@ label.lbl{display:block;font-size:12.5px;color:var(--dim);margin:0 0 7px 2px;fon
 <div id="startView" class="hidden">
   <div class="startTop">
     <h2>MINDMAP</h2>
-    <div style="display:flex;gap:2px">
-      <button class="iconbtn" id="btnStartDrawer" title="보관함">☰</button>
-      <button class="iconbtn" id="btnLogout" title="로그아웃">⏻</button>
-    </div>
+    <button class="iconbtn" id="btnLogout" title="로그아웃">⏻</button>
   </div>
   <p style="margin:0 0 6px;font-size:13px;color:var(--dim)" id="whoami"></p>
 
@@ -310,10 +335,9 @@ label.lbl{display:block;font-size:12.5px;color:var(--dim);margin:0 0 7px 2px;fon
     <button class="iconbtn" id="btnBack" title="처음으로">←</button>
     <div class="docTitle" id="docTitle">제목 없음</div>
     <span class="saveDot" id="saveDot"></span>
-    <button class="iconbtn" id="btnTidy" title="다시 정렬">✦</button>
-    <button class="iconbtn" id="btnExport" title="내보내기">⤓</button>
-    <button class="iconbtn" id="btnSettings" title="설정">⚙</button>
-    <button class="iconbtn" id="btnDrawer" title="보관함">☰</button>
+    <button class="toolbtn" id="btnTidy"><i data-icon="tidy"></i>정렬</button>
+    <button class="toolbtn" id="btnExport"><i data-icon="down"></i>내려받기</button>
+    <button class="toolbtn" id="btnSettings"><i data-icon="gear"></i>설정</button>
   </div>
 
   <div id="stage">
@@ -325,18 +349,27 @@ label.lbl{display:block;font-size:12.5px;color:var(--dim);margin:0 0 7px 2px;fon
       <button class="fab" id="btnAdd" title="키워드 추가">＋</button>
     </div>
 
+    <div class="tapTip hidden" id="tapTip">키워드를 누르면 연결·수정·삭제할 수 있습니다</div>
+
     <div class="actionbar hidden" id="actionbar">
-      <div class="who" id="selName"></div>
-      <button class="abtn" id="aAdd"><span>＋</span>이어서 추가</button>
-      <button class="abtn" id="aLink"><span>⤳</span>연결</button>
-      <button class="abtn" id="aEdit"><span>✎</span>수정</button>
-      <button class="abtn" id="aPin"><span>📌</span>고정</button>
-      <button class="abtn danger" id="aDel"><span>🗑</span>삭제</button>
+      <div class="abTitle"><b id="selName"></b> 선택됨</div>
+      <div class="abRow">
+        <button class="abtn" id="aAdd"><i data-icon="plus"></i>이어서 추가</button>
+        <button class="abtn" id="aLink"><i data-icon="link"></i>연결</button>
+        <button class="abtn" id="aEdit"><i data-icon="pen"></i>수정</button>
+        <button class="abtn" id="aPin"><i data-icon="pin"></i><span id="aPinLabel">고정</span></button>
+        <button class="abtn danger" id="aDel"><i data-icon="trash"></i>삭제</button>
+      </div>
     </div>
+
+    <div id="edgeSwipe"></div>
 
     <div class="hintbar hidden" id="hintbar"><b>연결할 키워드</b>를 누르세요 <button class="btn sm" id="hintCancel">취소</button></div>
   </div>
 </div>
+
+<!-- ============ 우측 서랍 손잡이 ============ -->
+<button class="drawerTab hidden" id="drawerTab"><i data-icon="drawer"></i><span>보관함</span></button>
 
 <!-- ============ 서랍 ============ -->
 <div class="scrim hidden" id="scrim"></div>
@@ -546,6 +579,27 @@ let dirty = false, saveTimer = null;
 let anim = {alpha:0, raf:0};
 
 const $ = s=>document.querySelector(s);
+const $$ = s=>[...document.querySelectorAll(s)];
+
+/* 선으로 그린 아이콘 — 이모지보다 기기별 편차가 없다 */
+const ICONS = {
+  tidy:  '<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20.5 3.5V8H16"/>',
+  down:  '<path d="M12 3v11"/><path d="M8 10.5l4 4 4-4"/><path d="M4 16v3.5h16V16"/>',
+  gear:  '<circle cx="12" cy="12" r="3.1"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/>',
+  drawer:'<rect x="3.2" y="4" width="17.6" height="6.4" rx="1.6"/><rect x="3.2" y="13.6" width="17.6" height="6.4" rx="1.6"/><path d="M10 7.2h4M10 16.8h4"/>',
+  plus:  '<circle cx="12" cy="12" r="8.4"/><path d="M12 8.4v7.2M8.4 12h7.2"/>',
+  link:  '<circle cx="6" cy="7" r="2.8"/><circle cx="18" cy="17" r="2.8"/><path d="M8.3 8.6l7.4 6.8"/>',
+  pen:   '<path d="M15.5 4.6l3.9 3.9L8.6 19.3l-4.6.7.7-4.6z"/><path d="M13.4 6.7l3.9 3.9"/>',
+  pin:   '<path d="M9 3.5h6l-1 5.4 3.2 3.4H6.8L10 8.9z"/><path d="M12 12.3v8.2"/>',
+  trash: '<path d="M4.5 6.5h15"/><path d="M9.5 6.5V4.3h5v2.2"/><path d="M6.7 6.5l.9 13.2h8.8l.9-13.2"/>'
+};
+function paintIcons(){
+  $$("[data-icon]").forEach(el=>{
+    if(el.dataset.done) return;
+    el.dataset.done="1";
+    el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICONS[el.dataset.icon]||""}</svg>`;
+  });
+}
 const uid = ()=> Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4);
 const esc = s=>String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
@@ -845,6 +899,33 @@ function render(){
   R.setProperty("--sheetLine", T.line);
   renderHubs();
   renderActionbar();
+}
+function renderHubs(){
+  const arr = S.nodes.filter(n=>n.id!=="root").sort((a,b)=>b._deg-a._deg).slice(0,3).filter(n=>n._deg>=2);
+  $("#hubbar").innerHTML = arr.length
+    ? `<div class="hubchip">중심축</div>` + arr.map(n=>`<div class="hubchip"><b>${esc(n.text)}</b> ${n._deg}</div>`).join("")
+    : "";
+}
+function renderActionbar(){
+  const bar = $("#actionbar"), tip = $("#tapTip");
+  const fab = document.querySelector(".zoomer");
+  if(!sel){
+    bar.classList.add("hidden");
+    fab.classList.remove("hidden");
+    tip.classList.toggle("hidden", S.nodes.length<2);
+    return;
+  }
+  tip.classList.add("hidden");
+  fab.classList.add("hidden");
+  const n = S.nodes.find(x=>x.id===sel);
+  if(!n){ sel=null; bar.classList.add("hidden"); return; }
+  bar.classList.remove("hidden");
+  $("#selName").textContent = n.text;
+  $("#aPin").classList.toggle("on", !!n.pinned);
+  $("#aPinLabel").textContent = n.pinned ? "고정해제" : "고정";
+  $("#aLink").classList.toggle("on", linkMode);
+  $("#aDel").style.display = n.id==="root" ? "none" : "";
+  $("#aPin").style.display = n.id==="root" ? "none" : "";
 }
 function fitSheet(){
   const changed = measureStage();
@@ -1166,6 +1247,8 @@ async function refreshRecent(){
 function show(v){
   ["#authView","#startView","#appView"].forEach(x=>$(x).classList.add("hidden"));
   $(v).classList.remove("hidden");
+  $("#drawerTab").classList.toggle("hidden", v==="#authView");
+  paintIcons();
 }
 function openDoc(doc){
   S = Object.assign({curve:"curve", hubMin:3, orientation:"portrait", theme:"sprout", font:"gowun"}, doc);
@@ -1188,9 +1271,20 @@ function newDoc(){
 // 시작 화면
 $("#btnNew").onclick = newDoc;
 $("#btnOpen").onclick = openDrawer;
-$("#btnStartDrawer").onclick = openDrawer;
-$("#btnDrawer").onclick = openDrawer;
+$("#drawerTab").onclick = openDrawer;
 $("#btnDrawerClose").onclick = closeDrawer;
+
+/* 오른쪽 가장자리를 왼쪽으로 쓸어도 서랍이 열린다 */
+(function edgeSwipe(){
+  const el = $("#edgeSwipe"); if(!el) return;
+  let x0=null;
+  el.addEventListener("pointerdown", e=>{ x0=e.clientX; el.setPointerCapture(e.pointerId); });
+  el.addEventListener("pointermove", e=>{
+    if(x0!==null && x0-e.clientX>38){ x0=null; openDrawer(); }
+  });
+  el.addEventListener("pointerup", e=>{ if(x0!==null && Math.abs(x0-e.clientX)<6) openDrawer(); x0=null; });
+  el.addEventListener("pointercancel", ()=>x0=null);
+})();
 
 // 주제 모달
 $("#titleCancel").onclick = ()=>closeModal("#mdTitle");
@@ -1261,9 +1355,9 @@ window.resetKwModal = resetKwModal;
 $("#aPin").onclick = ()=>{
   const n=S.nodes.find(x=>x.id===sel); if(!n||n.id==="root") return;
   n.pinned=!n.pinned;
-  if(!n.pinned) layout(180);
+  if(!n.pinned) layout(200);
   render(); markDirty();
-  toast(n.pinned?"자리를 고정했습니다":"고정을 풀었습니다");
+  toast(n.pinned?"이 자리에 고정했습니다":"고정을 풀었습니다");
 };
 $("#aDel").onclick = ()=>{
   const n=S.nodes.find(x=>x.id===sel); if(!n) return;
@@ -1386,6 +1480,7 @@ function enterApp(){
 /* ==========================================================================
    16. 시작
    ========================================================================== */
+paintIcons();
 (async function boot(){
   try{ FB = await initFirebase(); }catch(e){ console.warn("Firebase 초기화 건너뜀", e); }
   if(FB){
