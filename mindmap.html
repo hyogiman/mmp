@@ -163,9 +163,9 @@ label.lbl{display:block;font-size:12.5px;color:var(--dim);margin:0 0 7px 2px;fon
 
 /* 첫 사용 안내 */
 .tapTip{
-  position:absolute;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);
-  z-index:6;font-size:11.5px;padding:7px 14px;border-radius:999px;pointer-events:none;
-  background:rgba(30,35,42,.9);border:1px solid var(--line);color:var(--dim);white-space:nowrap
+  position:absolute;left:12px;top:12px;z-index:6;font-size:11px;padding:6px 11px;
+  border-radius:999px;pointer-events:none;background:rgba(30,35,42,.82);
+  border:1px solid var(--line);color:var(--dim);white-space:nowrap;letter-spacing:-.01em
 }
 
 /* 선택 노드 액션바 */
@@ -263,6 +263,7 @@ label.lbl{display:block;font-size:12.5px;color:var(--dim);margin:0 0 7px 2px;fon
 /* SVG 노드 */
 #sheet text{user-select:none;-webkit-user-select:none}
 #sheet .node{cursor:grab}
+#sheet .edge{cursor:pointer}
 #sheet .node.dragging{cursor:grabbing}
 .spin{animation:sp 1s linear infinite;display:inline-block}
 @keyframes sp{to{transform:rotate(360deg)}}
@@ -349,7 +350,7 @@ label.lbl{display:block;font-size:12.5px;color:var(--dim);margin:0 0 7px 2px;fon
       <button class="fab" id="btnAdd" title="키워드 추가">＋</button>
     </div>
 
-    <div class="tapTip hidden" id="tapTip">키워드를 누르면 연결·수정·삭제할 수 있습니다</div>
+    <div class="tapTip hidden" id="tapTip">키워드를 누르면 연결·수정·삭제</div>
 
     <div class="actionbar hidden" id="actionbar">
       <div class="abTitle"><b id="selName"></b> 선택됨</div>
@@ -364,7 +365,7 @@ label.lbl{display:block;font-size:12.5px;color:var(--dim);margin:0 0 7px 2px;fon
 
     <div id="edgeSwipe"></div>
 
-    <div class="hintbar hidden" id="hintbar"><b>연결할 키워드</b>를 누르세요 <button class="btn sm" id="hintCancel">취소</button></div>
+    <div class="hintbar hidden" id="hintbar"><b>연결하거나 끊을 키워드</b>를 누르세요 <button class="btn sm" id="hintCancel">취소</button></div>
   </div>
 </div>
 
@@ -576,6 +577,7 @@ let SHEET = {w:900, h:640};   // 시트 = 화면 전체 (CSS px)
 let sel = null;        // 선택된 노드 id
 let linkMode = false;
 let dirty = false, saveTimer = null;
+let tipSeen = (()=>{ try{ return localStorage.getItem("mindmap.tipSeen")==="1"; }catch(e){ return false; } })();
 let anim = {alpha:0, raf:0};
 
 const $ = s=>document.querySelector(s);
@@ -840,6 +842,7 @@ function buildSVG({forExport=false}={}){
   // 연결선
   const maxDeg = Math.max(1, ...S.nodes.filter(n=>n.id!=="root").map(n=>n._deg||0));
   S.edges.forEach(e=>{
+    if(!e.id) e.id = uid();
     const a=S.nodes.find(n=>n.id===e.a), b=S.nodes.find(n=>n.id===e.b);
     if(!a||!b) return;
     const w = 1.1 + 2.2*(Math.max(a._deg,b._deg)/Math.max(2,maxDeg));
@@ -850,7 +853,9 @@ function buildSVG({forExport=false}={}){
       const dx=b.x-a.x, dy=b.y-a.y;
       d=`M${a.x} ${a.y} Q${mx-dy*0.11} ${my+dx*0.11} ${b.x} ${b.y}`;
     }
-    P.push(`<path d="${d}" fill="none" stroke="${T.line}" stroke-width="${w.toFixed(2)}" stroke-linecap="round" opacity=".85"/>`);
+    if(!forExport) P.push(`<path class="edge" data-id="${e.id}" d="${d}" fill="none" stroke="#000" stroke-opacity="0" stroke-width="22" pointer-events="stroke"/>`);
+    const hot = (sel && (e.a===sel||e.b===sel));
+    P.push(`<path d="${d}" fill="none" stroke="${hot?T.hubS:T.line}" stroke-width="${(hot?w+0.8:w).toFixed(2)}" stroke-linecap="round" opacity="${hot?1:.85}" pointer-events="none"/>`);
   });
 
   // 노드
@@ -912,11 +917,12 @@ function renderActionbar(){
   if(!sel){
     bar.classList.add("hidden");
     fab.classList.remove("hidden");
-    tip.classList.toggle("hidden", S.nodes.length<2);
+    tip.classList.toggle("hidden", tipSeen || S.nodes.length<2);
     return;
   }
   tip.classList.add("hidden");
   fab.classList.add("hidden");
+  if(!tipSeen){ tipSeen=true; try{ localStorage.setItem("mindmap.tipSeen","1"); }catch(e){} }
   const n = S.nodes.find(x=>x.id===sel);
   if(!n){ sel=null; bar.classList.add("hidden"); return; }
   bar.classList.remove("hidden");
@@ -943,9 +949,14 @@ function fitSheet(){
 
   vp.addEventListener("pointerdown", e=>{
     const g = e.target.closest && e.target.closest(".node");
+    const ln = !g && e.target.closest && e.target.closest(".edge");
+    if(ln && !linkMode){ unlink(ln.dataset.id); return; }
     if(g){
       const id = g.dataset.id;
-      if(linkMode && sel && id!==sel){ doLink(sel,id); return; }
+      if(linkMode && sel){
+        if(id!==sel){ doLink(sel,id); return; }
+        linkMode=false; $("#hintbar").classList.add("hidden"); render(); return;
+      }
       sel = id; render();
       const n = S.nodes.find(x=>x.id===id);
       const p = toSheet(e.clientX,e.clientY);
@@ -1003,12 +1014,25 @@ function addKeywords(text, parentId){
   layout(200); render(); markDirty();
   return parts.length;
 }
+function nodeText(id){ const n=S.nodes.find(x=>x.id===id); return n?n.text:"?"; }
+function unlink(edgeId, quiet){
+  const i = S.edges.findIndex(e=>e.id===edgeId);
+  if(i<0) return;
+  const e = S.edges[i];
+  const done = ()=>{
+    S.edges.splice(i,1);
+    layout(220); render(); markDirty();
+    if(!quiet) toast("연결을 끊었습니다");
+  };
+  confirmBox("이 연결을 끊을까요?",
+    `“${nodeText(e.a)}” 와 “${nodeText(e.b)}” 사이의 선만 지웁니다. 키워드는 그대로 남습니다.`, done);
+}
 function doLink(a,b){
-  const exists = S.edges.some(e=>(e.a===a&&e.b===b)||(e.a===b&&e.b===a));
-  if(exists){ toast("이미 연결되어 있습니다"); }
-  else { S.edges.push({id:uid(), a, b}); toast("연결했습니다"); }
   linkMode=false; $("#hintbar").classList.add("hidden");
-  layout(160); render(); markDirty();
+  const found = S.edges.find(e=>(e.a===a&&e.b===b)||(e.a===b&&e.b===a));
+  if(found){ render(); unlink(found.id); return; }
+  S.edges.push({id:uid(), a, b});
+  layout(180); render(); markDirty(); toast("연결했습니다");
 }
 function deleteNode(id){
   if(id==="root") return;
