@@ -4,7 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#15181C">
-<title>마인드맵</title>
+<title>MINDMAP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Gowun+Batang:wght@400;700&family=Nanum+Myeongjo:wght@400;700;800&family=IBM+Plex+Sans+KR:wght@400;500;700&family=Jua&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
    마인드맵 — 생각을 흩뿌리고, 무게중심을 발견하는 도구
@@ -22,7 +25,8 @@
   --accentTxt:#0F1216;
   --radius:14px;
   --sheetShadow:0 24px 60px rgba(0,0,0,.55), 0 2px 0 rgba(255,255,255,.05);
-  --font:"Apple SD Gothic Neo","Pretendard","Malgun Gothic","맑은 고딕","Noto Sans KR",system-ui,sans-serif;
+  --font:"Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --sheetFont:"Gowun Dodum",sans-serif;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;margin:0}
@@ -106,11 +110,10 @@ label.lbl{display:block;font-size:12.5px;color:var(--dim);margin:0 0 7px 2px;fon
 .docTitle:hover{background:var(--panel2)}
 .saveDot{font-size:11px;color:var(--dim);flex:0 0 auto;margin-right:2px;white-space:nowrap}
 
-#stage{flex:1;position:relative;overflow:hidden;background:
-  radial-gradient(1200px 800px at 50% 40%, #1A1F25 0%, #131619 70%, #0F1215 100%)}
+#stage{flex:1;position:relative;overflow:hidden;background:#131619}
 #viewport{position:absolute;inset:0;touch-action:none}
-#sheetWrap{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
-#sheet{display:block;box-shadow:var(--sheetShadow);border-radius:2px}
+#sheetWrap{position:absolute;inset:0}
+#sheet{display:block;width:100%;height:100%;font-family:var(--sheetFont)}
 
 /* 무게중심 표시 */
 .hubbar{
@@ -118,8 +121,8 @@ label.lbl{display:block;font-size:12.5px;color:var(--dim);margin:0 0 7px 2px;fon
   pointer-events:none;flex-wrap:wrap;max-width:60%
 }
 .hubchip{
-  font-size:11px;padding:5px 9px;border-radius:999px;background:rgba(30,35,42,.9);
-  border:1px solid var(--line);color:var(--dim);letter-spacing:.02em
+  font-size:11.5px;padding:5px 10px;border-radius:999px;background:transparent;
+  border:1px solid var(--sheetLine,#888);color:var(--sheetInk,#888);letter-spacing:.02em;opacity:.75
 }
 .hubchip b{color:var(--accent);font-weight:700}
 
@@ -259,7 +262,7 @@ label.lbl{display:block;font-size:12.5px;color:var(--dim);margin:0 0 7px 2px;fon
     <ellipse cx="78" cy="72" rx="10" ry="7" fill="#1E232A" stroke="#4CAF7D" stroke-width="2"/>
     <ellipse cx="92" cy="52" rx="6" ry="4.5" fill="#1E232A" stroke="#4CAF7D" stroke-width="1.6"/>
   </svg>
-  <h1 class="brandtitle">마인드맵</h1>
+  <h1 class="brandtitle">MINDMAP</h1>
   <p class="brandsub">흩어놓은 생각에서 중심축을 찾는다</p>
 
   <div class="authbox">
@@ -272,19 +275,15 @@ label.lbl{display:block;font-size:12.5px;color:var(--dim);margin:0 0 7px 2px;fon
       <input id="pw" class="field" type="password" autocomplete="current-password" placeholder="••••••••">
     </div>
     <button id="btnLogin" class="btn primary wide">로그인</button>
-    <button id="btnSignup" class="btn wide hidden">계정 만들기</button>
     <p id="authMsg" class="msg"></p>
-    <div class="divider">또는</div>
-    <button id="btnGoogle" class="btn wide">Google 계정으로 계속</button>
-    <button id="btnGuest" class="btn ghost wide">이 기기에만 저장하고 시작</button>
-    <p class="authswitch">계정이 없다면 <b id="toSignup">가입하기</b></p>
+    <button id="btnGuest" class="btn ghost wide hidden">이 기기에만 저장하고 시작</button>
   </div>
 </div>
 
 <!-- ============ 2. 시작 화면 ============ -->
 <div id="startView" class="hidden">
   <div class="startTop">
-    <h2>마인드맵</h2>
+    <h2>MINDMAP</h2>
     <div style="display:flex;gap:2px">
       <button class="iconbtn" id="btnStartDrawer" title="보관함">☰</button>
       <button class="iconbtn" id="btnLogout" title="로그아웃">⏻</button>
@@ -323,9 +322,6 @@ label.lbl{display:block;font-size:12.5px;color:var(--dim);margin:0 0 7px 2px;fon
     <div class="hubbar" id="hubbar"></div>
 
     <div class="zoomer">
-      <button class="zbtn" id="btnZoomIn" title="확대">＋</button>
-      <button class="zbtn" id="btnZoomOut" title="축소">－</button>
-      <button class="zbtn" id="btnFit" title="화면 맞춤">⤢</button>
       <button class="fab" id="btnAdd" title="키워드 추가">＋</button>
     </div>
 
@@ -381,7 +377,11 @@ label.lbl{display:block;font-size:12.5px;color:var(--dim);margin:0 0 7px 2px;fon
     <div class="themeGrid" id="themeGrid"></div>
   </div>
   <div class="setRow">
-    <label class="lbl">용지 방향</label>
+    <label class="lbl">글꼴</label>
+    <div class="themeGrid" id="fontGrid"></div>
+  </div>
+  <div class="setRow">
+    <label class="lbl">내보낼 용지 방향</label>
     <div class="segrow">
       <button class="seg" data-ori="portrait">세로 A4</button>
       <button class="seg" data-ori="landscape">가로 A4</button>
@@ -539,7 +539,7 @@ const Store = () => (MODE==="cloud" ? CloudStore : LocalStore);
    3. 상태
    ========================================================================== */
 let S = null;          // 현재 문서
-let view = {x:0, y:0, k:1};
+let SHEET = {w:900, h:640};   // 시트 = 화면 전체 (CSS px)
 let sel = null;        // 선택된 노드 id
 let linkMode = false;
 let dirty = false, saveTimer = null;
@@ -552,20 +552,39 @@ const esc = s=>String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&g
 function blankDoc(title){
   const w = A4.w, h = A4.h;
   return {
-    id: uid(), title: title, theme:"sprout", orientation:"portrait", curve:"curve", hubMin:3,
+    id: uid(), title: title, theme:"sprout", font:"gowun", orientation:"portrait", curve:"curve", hubMin:3,
     nodes:[{id:"root", text:title, x:w/2, y:h/2, pinned:true}],
     edges:[], createdAt:Date.now(), updatedAt:Date.now()
   };
 }
-const sheetSize = ()=> S && S.orientation==="landscape" ? {w:A4.h,h:A4.w} : {w:A4.w,h:A4.h};
+const sheetSize = ()=> SHEET;
+function measureStage(){
+  const st=$("#stage");
+  const w=Math.max(320, st.clientWidth), h=Math.max(320, st.clientHeight);
+  const changed = (w!==SHEET.w || h!==SHEET.h);
+  if(changed && S){
+    const sx=w/SHEET.w, sy=h/SHEET.h;
+    S.nodes.forEach(n=>{ n.x*=sx; n.y*=sy; });
+  }
+  SHEET={w,h};
+  return changed;
+}
 
 /* ==========================================================================
    4. 측정 · 노드 스타일
    ========================================================================== */
-const SVGFONT = '"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif';
+const FONTS = [
+  {id:"gowun",   name:"고운돋움",  css:'"Gowun Dodum", sans-serif'},
+  {id:"batang",  name:"고운바탕",  css:'"Gowun Batang", serif'},
+  {id:"myeongjo",name:"나눔명조",  css:'"Nanum Myeongjo", serif'},
+  {id:"plex",    name:"플렉스고딕", css:'"IBM Plex Sans KR", sans-serif'},
+  {id:"jua",     name:"주아",     css:'"Jua", sans-serif'},
+  {id:"gaegu",   name:"개구",     css:'"Gaegu", cursive'}
+];
+const fontCSS = ()=> (FONTS.find(f=>f.id===((S&&S.font)||"gowun"))||FONTS[0]).css;
 const mctx = document.createElement("canvas").getContext("2d");
 function measure(text, size, weight){
-  mctx.font = `${weight} ${size}px ${SVGFONT}`;
+  mctx.font = `${weight} ${size}px ${fontCSS()}`;
   return mctx.measureText(text).width;
 }
 function wrap(text, maxChars){
@@ -608,17 +627,28 @@ function recompute(){
 }
 
 /** 연결 횟수에 따라 커지고 굵어진다 = 중심축의 시각화 */
+let SCALE_OVERRIDE = null;   // 내보내기(A4 인쇄) 전용 배율
+function scaleFactor(){
+  if(SCALE_OVERRIDE) return SCALE_OVERRIDE;
+  return Math.max(.92, Math.min(1.7, Math.min(SHEET.w,SHEET.h)/430));
+}
+/* 한 줄에 몇 글자까지 담을지 — 시트 폭에서 거꾸로 계산한다 */
+function maxCharsFor(size, isRoot){
+  const avail = SHEET.w*(isRoot?0.40:0.38);
+  return Math.max(5, Math.min(isRoot?13:10, Math.floor(avail/(size*0.95))));
+}
 function styleOf(n){
-  const hubMin = S.hubMin||3, superMin = hubMin+2;
-  let level = 0, size = 13.5, weight = 500;
-  if(n.id==="root"){ level=3; size=22; weight=800; }
-  else if(n._deg>=superMin){ level=2; size=19.5; weight=800; }
-  else if(n._deg>=hubMin){ level=1; size=16.5; weight=700; }
-  const lines = wrap(n.text, n.id==="root"?11:9);
+  const hubMin = S.hubMin||3, superMin = hubMin+2, SC = scaleFactor();
+  const len = String(n.text||"").length;
+  let level = 0, size = 17*SC, weight = 400;
+  if(n.id==="root"){ level=3; weight=700; size = (len>14?19 : len>8?23 : 27)*SC; }
+  else if(n._deg>=superMin){ level=2; size=25*SC; weight=700; }
+  else if(n._deg>=hubMin){ level=1; size=21*SC; weight=700; }
+  const lines = wrap(n.text, maxCharsFor(size, n.id==="root"));
   let wMax=0; lines.forEach(l=> wMax=Math.max(wMax, measure(l,size,weight)));
-  const padX = level>=2?24:18, padY = level>=2?15:11;
+  const padX = (level>=2?22:16)*SC, padY = (level>=2?13:10)*SC;
   const lh = size*1.28;
-  const rx = Math.max(wMax/2+padX, 30);
+  const rx = Math.max(wMax/2+padX, 34*scaleFactor());
   const ry = Math.max((lines.length*lh)/2+padY, size*0.95);
   return {level,size,weight,lines,rx,ry,lh};
 }
@@ -666,15 +696,21 @@ function layout(ticks){
 
   /* 3) A4 비율에 맞춘 타원 링 — 세로 종이는 세로로 더 넓게 퍼진다 */
   const maxDepth = Math.max(1, ...[...depth.values()]);
-  let padX=0, padY=0;
-  st.forEach(s=>{ padX=Math.max(padX,s.rx); padY=Math.max(padY,s.ry); });
-  const RX = Math.max(70, sz.w/2 - MARGIN - padX*0.85);
-  const RY = Math.max(70, sz.h/2 - MARGIN - padY*0.85);
+  const rim = S.nodes.filter(n=>n.id!=="root").map(n=>st.get(n.id));
+  const mid = (arr)=> arr.length ? arr.slice().sort((a,b)=>a-b)[Math.floor(arr.length/2)] : 40;
+  const rimX = Math.min(mid(rim.map(o=>o.rx)), sz.w*0.16);
+  const rimY = Math.min(mid(rim.map(o=>o.ry)), sz.h*0.14);
+  const RX = Math.max(70, sz.w/2 - MARGIN - rimX*0.95);
+  const RY = Math.max(70, sz.h/2 - MARGIN - rimY*0.95);
+  const rootS = st.get("root") || {rx:40, ry:30};
+  const inX = Math.min(RX*0.62, rootS.rx + rimX + 16);
+  const inY = Math.min(RY*0.62, rootS.ry + rimY + 16);
+  const spanX = Math.max(16, RX-inX), spanY = Math.max(16, RY-inY);
   const target = new Map();
   S.nodes.forEach(n=>{
     const d = depth.get(n.id)||1, a = angle.get(n.id)||0;
-    const t = d/(maxDepth+0.28);
-    target.set(n.id, {x: cx+Math.cos(a)*RX*t, y: cy+Math.sin(a)*RY*t});
+    const t = maxDepth<=1 ? 1 : (d-1)/(maxDepth-1);
+    target.set(n.id, {x: cx+Math.cos(a)*(inX+spanX*t), y: cy+Math.sin(a)*(inY+spanY*t)});
   });
 
   /* 4) 자리 다듬기 — 목표로 끌어당기고, 겹치면 밀어낸다 */
@@ -706,6 +742,26 @@ function layout(ticks){
       n.y = Math.max(MARGIN+s.ry, Math.min(sz.h-MARGIN-s.ry, n.y));
     });
   }
+
+  /* 마무리: 끌어당김 없이 겹침만 푼다 (가장자리에 몰린 것까지 정리) */
+  for(let t=0;t<60;t++){
+    for(let i=0;i<N.length;i++) for(let j=i+1;j<N.length;j++){
+      const a=N[i], b=N[j], sa=st.get(a.id), sb=st.get(b.id);
+      let dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy)||0.01;
+      const min = Math.max(sa.rx,sa.ry)+Math.max(sb.rx,sb.ry)+8;
+      if(d<min){
+        const push=(min-d)/2, ux=dx/d, uy=dy/d;
+        const aFix=a.id==="root", bFix=b.id==="root";
+        if(!aFix){ a.x-=ux*(bFix?push*2:push); a.y-=uy*(bFix?push*2:push); }
+        if(!bFix){ b.x+=ux*(aFix?push*2:push); b.y+=uy*(aFix?push*2:push); }
+      }
+    }
+    N.forEach(n=>{
+      const s=st.get(n.id);
+      n.x = Math.max(MARGIN+s.rx, Math.min(sz.w-MARGIN-s.rx, n.x));
+      n.y = Math.max(MARGIN+s.ry, Math.min(sz.h-MARGIN-s.ry, n.y));
+    });
+  }
 }
 function relayout(ticks=240){ layout(ticks); render(); markDirty(); }
 
@@ -717,7 +773,7 @@ function buildSVG({forExport=false}={}){
   recompute();
   const st = styles();
   const P=[];
-  P.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${sz.w} ${sz.h}" width="${sz.w}" height="${sz.h}" font-family='${SVGFONT}'>`);
+  P.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${sz.w} ${sz.h}" width="${sz.w}" height="${sz.h}" font-family='${fontCSS()}'>`);
   P.push(`<defs>
     <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
       <path d="M24 0H0V24" fill="none" stroke="${T.grid}" stroke-width="1"/></pattern>
@@ -769,8 +825,6 @@ function buildSVG({forExport=false}={}){
     P.push(`</g>`);
   });
 
-  // 종이 아래 제목선
-  P.push(`<text x="${MARGIN}" y="${sz.h-16}" font-size="9.5" fill="${T.line}" letter-spacing="1.2">${esc(S.title||"")}</text>`);
   P.push(`</svg>`);
   return P.join("");
 }
@@ -782,67 +836,29 @@ function render(){
   svg.setAttribute("viewBox",`0 0 ${sz.w} ${sz.h}`);
   svg.setAttribute("width",sz.w); svg.setAttribute("height",sz.h);
   svg.innerHTML = buildSVG().replace(/^<svg[^>]*>/,"").replace(/<\/svg>$/,"");
-  applyTransform();
   $("#docTitle").textContent = S.title || "제목 없음";
-  document.documentElement.style.setProperty("--accent", themeById(S.theme).accent);
+  const T = themeById(S.theme);
+  const R = document.documentElement.style;
+  R.setProperty("--accent", T.accent);
+  R.setProperty("--sheetFont", fontCSS());
+  R.setProperty("--sheetInk", T.ink);
+  R.setProperty("--sheetLine", T.line);
   renderHubs();
   renderActionbar();
 }
-function applyTransform(){
-  $("#sheetWrap").style.transform = `translate(${view.x}px,${view.y}px) scale(${view.k})`;
-}
-function renderHubs(){
-  const arr = S.nodes.filter(n=>n.id!=="root").sort((a,b)=>b._deg-a._deg).slice(0,3).filter(n=>n._deg>=2);
-  $("#hubbar").innerHTML = arr.length
-    ? `<div class="hubchip">중심축</div>` + arr.map(n=>`<div class="hubchip"><b>${esc(n.text)}</b> ${n._deg}</div>`).join("")
-    : "";
-}
-function renderActionbar(){
-  const bar = $("#actionbar");
-  if(!sel){ bar.classList.add("hidden"); return; }
-  const n = S.nodes.find(x=>x.id===sel);
-  if(!n){ sel=null; bar.classList.add("hidden"); return; }
-  bar.classList.remove("hidden");
-  $("#selName").innerHTML = `<b>${esc(n.text)}</b>`;
-  $("#aPin").classList.toggle("on", !!n.pinned);
-  $("#aLink").classList.toggle("on", linkMode);
-  $("#aDel").style.display = n.id==="root" ? "none" : "";
-  $("#aPin").style.display = n.id==="root" ? "none" : "";
+function fitSheet(){
+  const changed = measureStage();
+  const svg=$("#sheet");
+  svg.setAttribute("viewBox",`0 0 ${SHEET.w} ${SHEET.h}`);
+  if(changed && S){ layout(200); }
+  render();
 }
 
-/* ==========================================================================
-   7. 뷰포트 (확대·이동)
-   ========================================================================== */
-function fitView(){
-  const st=$("#stage"), sz=sheetSize();
-  const pad = 34;
-  const k = Math.min((st.clientWidth-pad*2)/sz.w, (st.clientHeight-pad*2-40)/sz.h);
-  view.k = Math.max(.2, Math.min(3, k));
-  view.x = (st.clientWidth - sz.w*view.k)/2;
-  view.y = (st.clientHeight - sz.h*view.k)/2 - 8;
-  applyTransform();
-}
-function zoomAt(cx,cy,factor){
-  const k2 = Math.max(.25, Math.min(4, view.k*factor));
-  const r = k2/view.k;
-  view.x = cx - (cx-view.x)*r;
-  view.y = cy - (cy-view.y)*r;
-  view.k = k2; applyTransform();
-}
-function toSheet(clientX, clientY){
-  const r = $("#stage").getBoundingClientRect();
-  return {x:(clientX-r.left-view.x)/view.k, y:(clientY-r.top-view.y)/view.k};
-}
-
-(function bindViewport(){
+/* 화면은 고정. 노드를 끌어 옮기는 것만 가능하다. */
+(function bindStage(){
   const vp = $("#viewport");
-  let drag=null, pinch=null;
-
-  vp.addEventListener("wheel", e=>{
-    e.preventDefault();
-    const r=$("#stage").getBoundingClientRect();
-    zoomAt(e.clientX-r.left, e.clientY-r.top, e.deltaY<0?1.12:0.89);
-  }, {passive:false});
+  let drag=null;
+  function toSheet(cx,cy){ const r=$("#stage").getBoundingClientRect(); return {x:cx-r.left, y:cy-r.top}; }
 
   vp.addEventListener("pointerdown", e=>{
     const g = e.target.closest && e.target.closest(".node");
@@ -855,33 +871,30 @@ function toSheet(clientX, clientY){
       drag = {id, ox:p.x-n.x, oy:p.y-n.y, moved:false};
       vp.setPointerCapture(e.pointerId);
     }else{
-      sel = null; linkMode=false; $("#hintbar").classList.add("hidden"); render();
-      drag = {pan:true, sx:e.clientX-view.x, sy:e.clientY-view.y};
-      vp.setPointerCapture(e.pointerId);
+      if(sel||linkMode){ sel=null; linkMode=false; $("#hintbar").classList.add("hidden"); render(); }
     }
   });
   vp.addEventListener("pointermove", e=>{
     if(!drag) return;
-    if(drag.pan){ view.x=e.clientX-drag.sx; view.y=e.clientY-drag.sy; applyTransform(); return; }
     const n = S.nodes.find(x=>x.id===drag.id); if(!n) return;
     const p = toSheet(e.clientX,e.clientY);
     n.x = p.x-drag.ox; n.y = p.y-drag.oy;
     drag.moved = true;
-    const sz=sheetSize();
-    n.x=Math.max(MARGIN,Math.min(sz.w-MARGIN,n.x));
-    n.y=Math.max(MARGIN,Math.min(sz.h-MARGIN,n.y));
+    n.x=Math.max(MARGIN,Math.min(SHEET.w-MARGIN,n.x));
+    n.y=Math.max(MARGIN,Math.min(SHEET.h-MARGIN,n.y));
     render();
   });
-  vp.addEventListener("pointerup", e=>{
-    if(drag && !drag.pan && drag.moved){
+  vp.addEventListener("pointerup", ()=>{
+    if(drag && drag.moved){
       const n=S.nodes.find(x=>x.id===drag.id);
-      if(n && n.id!=="root"){ n.pinned=true; }
+      if(n && n.id!=="root") n.pinned=true;
       markDirty(); render();
     }
     drag=null;
   });
   vp.addEventListener("pointercancel",()=>drag=null);
-  window.addEventListener("resize", ()=>{ if(S) fitView(); });
+  let rz;
+  window.addEventListener("resize", ()=>{ if(!S) return; clearTimeout(rz); rz=setTimeout(fitSheet,180); });
 })();
 
 /* ==========================================================================
@@ -957,24 +970,71 @@ async function saveNow(){
 /* ==========================================================================
    10. 내보내기
    ========================================================================== */
-function svgToDataURL(svg){
-  return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svg)));
-}
-function renderToCanvas(scale=3){
-  return new Promise((res,rej)=>{
-    const sz=sheetSize();
-    const img=new Image();
-    img.onload=()=>{
-      const c=document.createElement("canvas");
-      c.width=Math.round(sz.w*scale); c.height=Math.round(sz.h*scale);
-      const x=c.getContext("2d");
-      x.fillStyle=themeById(S.theme).bg; x.fillRect(0,0,c.width,c.height);
-      x.drawImage(img,0,0,c.width,c.height);
-      res(c);
-    };
-    img.onerror=rej;
-    img.src=svgToDataURL(buildSVG({forExport:true}));
+/* 화면은 웹폰트가 적용되지만 SVG를 이미지로 바꾸면 폰트가 빠진다.
+   그래서 내보내기는 캔버스에 직접 그린다. A4 비율로 다시 정렬한 뒤 출력. */
+async function drawA4(scale=3){
+  if(document.fonts && document.fonts.ready) await document.fonts.ready;
+  const a4 = S.orientation==="landscape" ? {w:A4.h,h:A4.w} : {w:A4.w,h:A4.h};
+  const prev = SHEET;
+  const saved = S.nodes.map(n=>({id:n.id,x:n.x,y:n.y}));
+  S.nodes.forEach(n=>{ n.x*=a4.w/prev.w; n.y*=a4.h/prev.h; });
+  SHEET = a4;
+  SCALE_OVERRIDE = 1.05;
+  layout(280);
+  recompute();
+  const T = themeById(S.theme), st = styles(), F = fontCSS();
+
+  const c = document.createElement("canvas");
+  c.width = Math.round(a4.w*scale); c.height = Math.round(a4.h*scale);
+  const x = c.getContext("2d");
+  x.scale(scale,scale);
+  x.fillStyle = T.bg; x.fillRect(0,0,a4.w,a4.h);
+
+  x.strokeStyle=T.grid; x.lineWidth=.7; x.globalAlpha=.55;
+  for(let g=0; g<a4.w; g+=24){ x.beginPath(); x.moveTo(g,0); x.lineTo(g,a4.h); x.stroke(); }
+  for(let g=0; g<a4.h; g+=24){ x.beginPath(); x.moveTo(0,g); x.lineTo(a4.w,g); x.stroke(); }
+  x.globalAlpha=1;
+
+  const maxDeg = Math.max(2, ...S.nodes.filter(n=>n.id!=="root").map(n=>n._deg||0));
+  x.strokeStyle=T.line; x.lineCap="round"; x.globalAlpha=.85;
+  S.edges.forEach(e=>{
+    const a=S.nodes.find(n=>n.id===e.a), b=S.nodes.find(n=>n.id===e.b);
+    if(!a||!b) return;
+    x.lineWidth = 1.1 + 2.2*(Math.max(a._deg,b._deg)/maxDeg);
+    x.beginPath(); x.moveTo(a.x,a.y);
+    if(S.curve==="straight") x.lineTo(b.x,b.y);
+    else{
+      const mx=(a.x+b.x)/2, my=(a.y+b.y)/2, dx=b.x-a.x, dy=b.y-a.y;
+      x.quadraticCurveTo(mx-dy*0.11, my+dx*0.11, b.x, b.y);
+    }
+    x.stroke();
   });
+  x.globalAlpha=1;
+
+  x.textAlign="center"; x.textBaseline="middle";
+  S.nodes.forEach(n=>{
+    const sy = st.get(n.id), isRoot = n.id==="root";
+    x.beginPath(); x.ellipse(n.x, n.y, sy.rx, sy.ry, 0, 0, Math.PI*2);
+    x.fillStyle = isRoot?T.root : sy.level>=1?T.hub : T.node;
+    x.fill();
+    x.strokeStyle = isRoot?T.rootS : sy.level>=1?T.hubS : T.nodeS;
+    x.lineWidth = isRoot?3 : sy.level>=2?2.6 : sy.level>=1?2.2 : 1.6;
+    x.stroke();
+    x.fillStyle = isRoot?T.inkHub : sy.level>=1?T.inkHub : T.inkOn;
+    x.font = `${sy.weight} ${sy.size}px ${F}`;
+    const top = n.y - (sy.lines.length-1)*sy.lh/2;
+    sy.lines.forEach((ln,i)=> x.fillText(ln, n.x, top+i*sy.lh));
+  });
+
+  x.textAlign="left"; x.fillStyle=T.line; x.font=`400 9.5px ${F}`;
+  x.fillText(S.title||"", MARGIN, a4.h-14);
+
+  SHEET = prev;
+  SCALE_OVERRIDE = null;
+  const back = new Map(saved.map(o=>[o.id,o]));
+  S.nodes.forEach(n=>{ const o=back.get(n.id); if(o){ n.x=o.x; n.y=o.y; }});
+  render();
+  return {canvas:c, size:a4};
 }
 function download(url, name){
   const a=document.createElement("a"); a.href=url; a.download=name;
@@ -984,7 +1044,7 @@ const safeName = ()=> (S.title||"마인드맵").replace(/[\\/:*?"<>|]/g,"_").sli
 
 async function exportPNG(){
   toast("이미지를 만드는 중…");
-  const c = await renderToCanvas(3);
+  const {canvas:c} = await drawA4(3);
   c.toBlob(b=>{
     const u=URL.createObjectURL(b);
     download(u, safeName()+".png");
@@ -1002,8 +1062,7 @@ async function exportPDF(){
     }).catch(()=>{ toast("PDF 도구를 불러오지 못했습니다"); });
   }
   if(!window.jspdf) return;
-  const c = await renderToCanvas(3);
-  const sz = sheetSize();
+  const {canvas:c, size:sz} = await drawA4(3);
   const pdf = new window.jspdf.jsPDF({orientation:S.orientation, unit:"pt", format:"a4"});
   pdf.addImage(c.toDataURL("image/jpeg",0.96), "JPEG", 0, 0, sz.w, sz.h);
   pdf.save(safeName()+".pdf");
@@ -1109,10 +1168,12 @@ function show(v){
   $(v).classList.remove("hidden");
 }
 function openDoc(doc){
-  S = Object.assign({curve:"curve", hubMin:3, orientation:"portrait", theme:"sprout"}, doc);
+  S = Object.assign({curve:"curve", hubMin:3, orientation:"portrait", theme:"sprout", font:"gowun"}, doc);
   sel=null; linkMode=false; dirty=false;
   show("#appView");
-  layout(220); render(); fitView();
+  measureStage();
+  $("#sheet").setAttribute("viewBox",`0 0 ${SHEET.w} ${SHEET.h}`);
+  layout(260); render();
   $("#saveDot").textContent="";
 }
 function newDoc(){
@@ -1216,9 +1277,6 @@ $("#btnTidy").onclick = ()=>{
   relayout(320); toast("다시 정렬했습니다");
 };
 $("#docTitle").onclick = ()=>{ sel="root"; render(); $("#aEdit").click(); };
-$("#btnZoomIn").onclick = ()=>{ const s=$("#stage"); zoomAt(s.clientWidth/2,s.clientHeight/2,1.2); };
-$("#btnZoomOut").onclick = ()=>{ const s=$("#stage"); zoomAt(s.clientWidth/2,s.clientHeight/2,0.83); };
-$("#btnFit").onclick = fitView;
 
 // 내보내기
 $("#btnExport").onclick = ()=>openModal("#mdExport");
@@ -1241,9 +1299,16 @@ function paintSettings(){
   $("#themeGrid").querySelectorAll("[data-theme]").forEach(b=>{
     b.onclick=()=>{ S.theme=b.dataset.theme; render(); markDirty(); paintSettings(); };
   });
+  $("#fontGrid").innerHTML = FONTS.map(f=>`
+    <button class="themeCard ${((S.font||"gowun")===f.id)?"on":""}" data-font="${f.id}" style="justify-content:center">
+      <span class="nm" style="font-family:${f.css};font-size:16px;text-align:center;width:100%">${f.name}</span>
+    </button>`).join("");
+  $("#fontGrid").querySelectorAll("[data-font]").forEach(b=>{
+    b.onclick=()=>{ S.font=b.dataset.font; layout(180); render(); markDirty(); paintSettings(); };
+  });
   document.querySelectorAll("[data-ori]").forEach(b=>{
     b.classList.toggle("on", S.orientation===b.dataset.ori);
-    b.onclick=()=>{ S.orientation=b.dataset.ori; layout(280); render(); fitView(); markDirty(); paintSettings(); };
+    b.onclick=()=>{ S.orientation=b.dataset.ori; markDirty(); paintSettings(); toast("내보낼 때 이 방향으로 나옵니다"); };
   });
   document.querySelectorAll("[data-curve]").forEach(b=>{
     b.classList.toggle("on", (S.curve||"curve")===b.dataset.curve);
@@ -1281,32 +1346,17 @@ function cfgHint(){
   if(!window.FIREBASE_CONFIG) return "firebase-config.js 안에 window.FIREBASE_CONFIG 가 없습니다.";
   return "firebase-config.js 의 값이 아직 비어 있습니다. 콘솔에서 복사한 값으로 채워주세요.";
 }
-let signupMode=false;
-$("#toSignup").onclick = ()=>{
-  signupMode=!signupMode;
-  $("#btnSignup").classList.toggle("hidden", !signupMode);
-  $("#btnLogin").classList.toggle("hidden", signupMode);
-  $("#toSignup").textContent = signupMode ? "로그인으로 돌아가기" : "가입하기";
-  authMsg("");
-};
 $("#btnLogin").onclick = async ()=>{
   if(!FB){ authMsg(cfgHint()); return; }
+  const em=$("#email").value.trim(), pw=$("#pw").value;
+  if(!em||!pw){ authMsg("이메일과 비밀번호를 입력해 주세요."); return; }
+  authMsg("");
   try{
-    await FB.A.signInWithEmailAndPassword(FB.auth, $("#email").value.trim(), $("#pw").value);
+    await FB.A.signInWithEmailAndPassword(FB.auth, em, pw);
   }catch(e){ authMsg(authError(e)); }
 };
-$("#btnSignup").onclick = async ()=>{
-  if(!FB){ authMsg(cfgHint()); return; }
-  try{
-    await FB.A.createUserWithEmailAndPassword(FB.auth, $("#email").value.trim(), $("#pw").value);
-  }catch(e){ authMsg(authError(e)); }
-};
-$("#btnGoogle").onclick = async ()=>{
-  if(!FB){ authMsg(cfgHint()); return; }
-  try{
-    await FB.A.signInWithPopup(FB.auth, new FB.A.GoogleAuthProvider());
-  }catch(e){ authMsg(authError(e)); }
-};
+$("#pw").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#btnLogin").click(); });
+$("#email").addEventListener("keydown", e=>{ if(e.key==="Enter") $("#pw").focus(); });
 $("#btnGuest").onclick = ()=>{
   MODE="local"; USER={uid:"local", email:"이 기기"};
   enterApp();
@@ -1345,7 +1395,8 @@ function enterApp(){
     });
   }else{
     show("#authView");
-    authMsg("");
+    authMsg(cfgHint());
+    $("#btnGuest").classList.remove("hidden");
     $("#btnGuest").classList.add("primary");
   }
 })();
