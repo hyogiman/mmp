@@ -13,10 +13,10 @@
    ============================================================ */
 
 window.FIREBASE_CONFIG = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  apiKey: "AIzaSyD3OaG0Tl0ZDmVE-hhWJG7SlN1YSsLJE04",
+  authDomain: "mindmap-8d70e.firebaseapp.com",
+  projectId: "mindmap-8d70e",
+  storageBucket: "mindmap-8d70e.firebasestorage.app",
+  messagingSenderId: "268662676375",
+  appId: "1:268662676375:web:690f7ae3741a9c8e12c2d2"
 };
