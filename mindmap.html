@@ -1486,7 +1486,69 @@ window.addEventListener("beforeunload",()=>{if(dirty)saveNow()});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&dirty)saveNow()});
 
 /* ==========================================================================
-   16. BOOT
+   16. MOBILE / SYSTEM BACK NAVIGATION
+   Android의 시스템 뒤로가기 버튼이 브라우저 이전 페이지로 곧장 빠져나가지
+   않도록 현재 문서 위에 같은-URL history guard를 하나 둔다.
+
+   뒤로가기 우선순위
+   1) 열린 모달 닫기
+   2) 빠른 입력창 닫기
+   3) 연결 모드 해제
+   4) 에디터 -> 홈
+   5) 홈에서는 1.6초 안에 두 번 눌러야 실제 페이지 이탈
+   ========================================================================== */
+let backGuardReady=false,backHandling=false,exitBackArmedUntil=0;
+const isTouchBackEnvironment=()=>{
+  try{return matchMedia("(pointer: coarse)").matches||navigator.maxTouchPoints>0}catch(e){return navigator.maxTouchPoints>0}
+};
+function armBackGuard(){
+  if(!isTouchBackEnvironment())return;
+  history.pushState({mmpBackGuard:true},"",location.href);
+  backGuardReady=true;
+}
+function currentAppView(){
+  if(!$("#editorView").classList.contains("hidden"))return"editor";
+  if(!$("#homeView").classList.contains("hidden"))return"home";
+  return"auth";
+}
+async function handleSystemBack(){
+  if(backHandling)return;
+  backHandling=true;
+  let shouldRearm=true;
+  try{
+    if($(`.modal:not(.hidden)`)){
+      closeAllModals();
+    }else if(!$("#quickPanel").classList.contains("hidden")){
+      closeQuick();renderUI();
+    }else if(linkMode){
+      linkMode=false;renderUI();
+    }else if(currentAppView()==="editor"&&S){
+      await leaveEditor();
+    }else{
+      const t=Date.now();
+      if(t<exitBackArmedUntil){
+        shouldRearm=false;
+        exitBackArmedUntil=0;
+        // 현재 guard에서 원래 문서 history 항목으로 돌아온 상태이므로
+        // 한 번 더 뒤로 이동하면 실제 이전 페이지/앱 화면으로 빠져나간다.
+        setTimeout(()=>history.back(),0);
+      }else{
+        exitBackArmedUntil=t+1600;
+        toast("한 번 더 누르면 종료합니다");
+      }
+    }
+  }finally{
+    if(shouldRearm)setTimeout(()=>{armBackGuard();backHandling=false},0);
+    else backHandling=false;
+  }
+}
+window.addEventListener("popstate",()=>{
+  if(!backGuardReady||!isTouchBackEnvironment())return;
+  handleSystemBack();
+});
+
+/* ==========================================================================
+   17. BOOT
    ========================================================================== */
 (async function boot(){
   showView("auth");
@@ -1499,6 +1561,7 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden&&dirty)save
   }else{
     $("#authMsg").textContent=window.__cfgMissing?"firebase-config.js 파일이 없습니다.":"Firebase 설정이 없어 로컬 모드로 사용할 수 있습니다.";
   }
+  armBackGuard();
 })();
 </script>
 </body>
